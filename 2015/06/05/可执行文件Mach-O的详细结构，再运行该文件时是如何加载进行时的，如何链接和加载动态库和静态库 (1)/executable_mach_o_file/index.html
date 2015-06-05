@@ -1,0 +1,236 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Sky-Weihao的博客</title>
+  <meta name="author" content="Weihao Xu">
+  
+  <meta name="description" content="我是文化宫啊文化宫,欢迎光临我的博客">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+  <meta property="og:site_name" content="Sky-Weihao的博客"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/avatar.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
+<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-368771XX-X']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class='container'>
+    
+      <li><a href="/">主页</a></li>
+    
+      <li><a href="/archives">文档</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2015-06-05T10:32:03.000Z"><a href="/2015/06/05/可执行文件Mach-O的详细结构，再运行该文件时是如何加载进行时的，如何链接和加载动态库和静态库 (1)/executable_mach_o_file/">周五, 6月 5 2015, 6:32:03 晚上</a></time>
+
+  
+    <h1 class="title"></h1>
+  
+
+
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <h1 id="可执行文件Mach-O的详细结构，再运行该文件时是如何加载进行时的，如何链接和加载动态库和静态库">可执行文件Mach-O的详细结构，再运行该文件时是如何加载进行时的，如何链接和加载动态库和静态库</h1><p>在Mach-O文件的开头，有一个header结构标记这个文件的类型为Mach-O文件，并且这个结构里面包含了一些其它的信息：如target architecture和其它文件解析的选项等。<br>header结构后面紧接着是一串关于layout和链接文件特征的加载命令，除了一些其他消息外，这些加载命令定义了：</p>
+<ol>
+<li>在虚拟内存中的初始化布局文件</li>
+<li>symbol 表的地址（$可是使用nm(1)工具去查看里面的内容）</li>
+<li>程序主线程的初始执行状态</li>
+<li>包含主要可执行的imported symbols的共享库</li>
+</ol>
+<p>在这些加载命令之后，所有的Mach-O文件包含了一个或多个segments的数据，每一个segment都包含一个或多个的sections，每个section包含一些独特类型的代码或数据。每一个segment定义了虚拟内存的一个区域，这个区域被动态连接器映射到程序的内存地址。segment和section的实际数量和布局是被上面的加载命令和文件类型确定产生的。<br>     在用户级别的完全链接的Mach-O文件，最后一个segment是__LINKEDIT段，这个段包含了链接编译信息的表，如symbol 表、string表等，他们被用于动态加载器对可执行文件或Mach-O bundle和他们所依赖的库进行链接<br><img src="./Screen Shot 2015-05-25 at 10.23.29 PM.png" alt="Alt text"></p>
+<h2 id="头结构和加载命令">头结构和加载命令</h2><p>一个Mach-O文件包含了一个结构的代码和数据，一个Mach-O文件头结构定义了能让内核去查看的targer architecture，例如基于PowerOC电脑的代码不能再基于Intel的电脑上执行，可以使用下面命令查看头结构<br>xcrun otool -v -h a.out<br><img src="./Screen Shot 2015-05-22 at 5.57.28 PM.png" alt="Alt text"></p>
+<p>可使用下面命令查看加载命令<br>xcun otool -v -l a.out<br><img src="./Screen Shot 2015-06-05 at 5.39.28 PM.png" alt="Alt text"></p>
+<h3 id="DATA">DATA</h3><h4 id="Segment">Segment</h4><p> 一个segment定义了一些Mach-O文件的数据、地址和内存保护属性，这些数据在动态链接器加载程序时被映射到了虚拟内存中。因此，segments通常都是虚拟内存页对齐的，一个segment包含了0或多个sections。<br>segments在运行时需要的内存比他们在编译时更多，而且他能定义比他们实际在硬盘空间大小中更多的内存空间。例如，链接器产生给PowerPC的可执行文件<strong>PAGEZERO segment在虚拟内存中的大小是一页，但是在硬盘中大小为0，因为 </strong>PAGEZERO 没有数据，所以它没有必要在可执行文件中占有任何空间。<br>为了压缩，中间对象文件（）包含一个segment。这个segment没有名字，它包含了在最终对象文件中所有最终会分到不同segment的sections数据。这些数据结构中定义了一个section在segment中的名字和地方，然后静态链接会把每个section在最后对象文件中放到不同的segment中去。<br>为了规范，segment应该在虚拟内存页面边界上对齐，4096个字节。为了计算segment的大小，把每段的大小给加起来，然后以这个总大小在虚拟内存中取整4096字节的倍数。<br> 头结构和加载命令在可执行文件中因为分页的原因。被当成是第一个segment的部分。<br>下列这些是标准OS X的开发工具可能在可执行文件中包含的segments，其中包括：</p>
+<ol>
+<li>静态连接器创建了<strong>PAGEZERO segment作为可执行文件的第一段，这个segment在虚拟内存中位置为0x00000000并且没有确保是内存对齐的，因此造成访问NULL指针（一个会导致马上崩溃的通用c程序错误）。这个segment在现在的程序结构中充满了一整页的虚拟内存，即4096个字节，因为在</strong>PAGEZERO segment中没有数据，所以他在文件中没有占有空间（在segment command中文件大小为0）。</li>
+<li>__TEXT segment包含了可执行代码和其他只读的数据，为了允许内核把它直接从可执行文件映射到可共享内存，静态连接器设置了这一段的虚拟内存不允许执行写操作。当这段命令映射到内存中时，他能够被所有对这段内容感星期的进程访问（这个最开始被用作frameworks，bundles和共享的库，但是它也可能在OS X中同时运行多份同样的可执行复制文件）。只读的属性也意味着__TEXT segment的数据永远不需要重新写回硬盘中。当内核需要释放物理内存时，它只需要废弃掉那些__TEXT的内存页并且当需要的时候重新从硬盘中加载。</li>
+<li>__DATA segment包含了可写数据，静态链接器设置这段的虚拟内存允许读和写操作。因为它是可写的，一个框架或其他共享库的__DATA 段被每个链接到该库的进程复制一份。因为__DATA段的内存页被设置为可写可读的，内核会标记他们为在写的时候会被服务，因此当一个进程写了__DATA段的其中一页时，进程会收到那一页的复制数据。</li>
+<li>__OBJC段包含了在Objective-C语言运行时支持库的数据</li>
+<li>__IMPORT段包含了在可执行文件中的没有被定义的符号集合和非lazy的指向符号的指针。</li>
+<li>__LINKEDIT段包含了动态链接器的原始数据，如符号，字符串和重定位的表的入口。</li>
+</ol>
+<h4 id="Section">Section</h4><p>__TEXT和__DATA段可能包含了一系列的标准sections。__OBJC segment包含了一系列的是Objective-C编译器私有的段。需要知道的是静态链接器和文件分析工具会使用section的类型和数据去定义它们如何处理section。</p>
+<h5 id="__TEXT_segment">__TEXT segment</h5><p>__text section 有可执行的机器码，编译器只会把可执行的代码放到这一个section，没有其它任何形式的表或者数据。<br>__cstring section c的字符串常量，静态链接器会在构造最终的程序时把c的字符串常量合并（删除冗余的常量）<br>__picsymbol_stub 独立位置的间接符号集合Position-Independent Code” in Mach-O Programming Topics<br>__symbol_stub 间接符号集合<br>__const 初始化的常量变量，编译器会把所有声明为const的不能重定位的数据放到这里。（编译器会把未初始化的常量变量放到__zero-filled section中<br>__literal4 编译器会把单精度的浮点数放到这个section<br>__literal8 编译器会把双精度的浮点数放到这个section</p>
+<p><strong>DATA segment
+</strong>data 初始化的可变变量，如可写的c字符串和数据数组等。<br><strong>la_symbol_ptr lazy的符号指针，间接引用了被import到不同文件的功能函数
+</strong>nl_symbol_ptr 非lazy的符号指针，间接引用了被import到不同文件的数据项（See “Position-Independent Code” in Mach-O Programming Topics for more information.）<br><strong>dyld 动态链接器的的占位符段，好像然而并没什么用
+</strong>const 初始化的可重定位的常量变量<br><strong>module_init_func module的初始化函数，c++编译器会把静态构造器放到这里。
+</strong>bss 未初始化的静态变量，如static int i<br>__common 未初始化的被import的符号定义，如被定义在全局范围中的int i;</p>
+<p><strong>IMPORT
+</strong>jump_table 在动态库中调用函数的符号集合<br>__pointers 非lazy的符号指针，这些用于直接引用被import到不同文件的功能函数</p>
+<p>可以使用xcrun size -x -l -m a.out命令查看有哪些数据段<br><img src="./Screen Shot 2015-06-05 at 5.47.23 PM.png" alt="Alt text"></p>
+<h3 id="Data_Types">Data Types</h3><p><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html#//apple_ref/doc/uid/TP40000895" target="_blank" rel="external">详情查看 OS X ABI Mach-O File Format Reference</a></p>
+
+      
+    </div>
+    <footer>
+      
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+  
+    <a href="/2015/06/04/测试，第二篇文章/" class="alignright next">Prev<i class="fa fa-long-arrow-right"></i></a>
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread" data-thread-key="/2015/06/05/可执行文件Mach-O的详细结构，再运行该文件时是如何加载进行时的，如何链接和加载动态库和静态库 (1)/executable_mach_o_file/"></div>
+<!-- Duoshuo Comment END -->
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2015 Weihao Xu
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
+<script src="/js/gallery.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+
+
+
+
+    <script type="text/javascript">
+        (function(){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+/*
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop > 0 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+*/
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+    
+    <script type="text/javascript">
+      var duoshuoQuery = {short_name:"sky-weihao"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] 
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>
