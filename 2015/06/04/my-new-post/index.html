@@ -150,18 +150,19 @@ Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="ex
 
     <script type="text/javascript">
         (function(){
-
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+/*
             $(window).scroll(function(){
 
                 var scrollTop = $(window).scrollTop();
-                if ( scrollTop >200 ){
+                if ( scrollTop > 0 ){
                     $("#main-nav").removeClass('normal_mode').addClass('top_mode');
                 } else{
                     $("#main-nav").removeClass('top_mode').addClass('normal_mode');
                 }
 
             });
-
+*/
         })();
     </script>
 
