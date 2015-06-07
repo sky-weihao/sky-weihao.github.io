@@ -103,9 +103,9 @@
 <li>程序主线程的初始执行状态</li>
 <li>包含主要可执行的imported symbols的共享库</li>
 </ol>
-<p>在这些加载命令之后，所有的Mach-O文件包含了一个或多个segments的数据，每一个segment都包含一个或多个的sections，每个section包含一些独特类型的代码或数据。每一个segment定义了虚拟内存的一个区域，这个区域被动态连接器映射到程序的内存地址。segment和section的实际数量和布局是被上面的加载命令和文件类型确定产生的。<br>     在用户级别的完全链接的Mach-O文件，最后一个segment是__LINKEDIT段，这个段包含了链接编译信息的表，如symbol 表、string表等，他们被用于动态加载器对可执行文件或Mach-O bundle和他们所依赖的库进行链接<br><img src="./img/Screen Shot 2015-05-25 at 10.23.29 PM.png" alt=""></p>
-<h2 id="头结构和加载命令">头结构和加载命令</h2><p>一个Mach-O文件包含了一个结构的代码和数据，一个Mach-O文件头结构定义了能让内核去查看的targer architecture，例如基于PowerOC电脑的代码不能再基于Intel的电脑上执行，可以使用下面命令查看头结构<br>xcrun otool -v -h a.out<br><img src="./img/Screen Shot 2015-05-22 at 5.57.28 PM.png" alt=""></p>
-<p>可使用下面命令查看加载命令<br>xcun otool -v -l a.out<br><img src="./img/Screen Shot 2015-06-05 at 5.39.28 PM.png" alt=""></p>
+<p>在这些加载命令之后，所有的Mach-O文件包含了一个或多个segments的数据，每一个segment都包含一个或多个的sections，每个section包含一些独特类型的代码或数据。每一个segment定义了虚拟内存的一个区域，这个区域被动态连接器映射到程序的内存地址。segment和section的实际数量和布局是被上面的加载命令和文件类型确定产生的。<br>     在用户级别的完全链接的Mach-O文件，最后一个segment是__LINKEDIT段，这个段包含了链接编译信息的表，如symbol 表、string表等，他们被用于动态加载器对可执行文件或Mach-O bundle和他们所依赖的库进行链接<br><img src="/img/Screen Shot 2015-05-25 at 10.23.29 PM.png" alt=""></p>
+<h2 id="头结构和加载命令">头结构和加载命令</h2><p>一个Mach-O文件包含了一个结构的代码和数据，一个Mach-O文件头结构定义了能让内核去查看的targer architecture，例如基于PowerOC电脑的代码不能再基于Intel的电脑上执行，可以使用下面命令查看头结构<br>xcrun otool -v -h a.out<br><img src="/img/Screen Shot 2015-05-22 at 5.57.28 PM.png" alt=""></p>
+<p>可使用下面命令查看加载命令<br>xcun otool -v -l a.out<br><img src="/img/Screen Shot 2015-06-05 at 5.39.28 PM.png" alt=""></p>
 <h3 id="DATA">DATA</h3><h4 id="Segment">Segment</h4><p> 一个segment定义了一些Mach-O文件的数据、地址和内存保护属性，这些数据在动态链接器加载程序时被映射到了虚拟内存中。因此，segments通常都是虚拟内存页对齐的，一个segment包含了0或多个sections。<br>segments在运行时需要的内存比他们在编译时更多，而且他能定义比他们实际在硬盘空间大小中更多的内存空间。例如，链接器产生给PowerPC的可执行文件<strong>PAGEZERO segment在虚拟内存中的大小是一页，但是在硬盘中大小为0，因为 </strong>PAGEZERO 没有数据，所以它没有必要在可执行文件中占有任何空间。<br>为了压缩，中间对象文件（）包含一个segment。这个segment没有名字，它包含了在最终对象文件中所有最终会分到不同segment的sections数据。这些数据结构中定义了一个section在segment中的名字和地方，然后静态链接会把每个section在最后对象文件中放到不同的segment中去。<br>为了规范，segment应该在虚拟内存页面边界上对齐，4096个字节。为了计算segment的大小，把每段的大小给加起来，然后以这个总大小在虚拟内存中取整4096字节的倍数。<br> 头结构和加载命令在可执行文件中因为分页的原因。被当成是第一个segment的部分。<br>下列这些是标准OS X的开发工具可能在可执行文件中包含的segments，其中包括：</p>
 <ol>
 <li>静态连接器创建了<strong>PAGEZERO segment作为可执行文件的第一段，这个segment在虚拟内存中位置为0x00000000并且没有确保是内存对齐的，因此造成访问NULL指针（一个会导致马上崩溃的通用c程序错误）。这个segment在现在的程序结构中充满了一整页的虚拟内存，即4096个字节，因为在</strong>PAGEZERO segment中没有数据，所以他在文件中没有占有空间（在segment command中文件大小为0）。</li>
