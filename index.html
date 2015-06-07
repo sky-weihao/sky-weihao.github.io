@@ -109,6 +109,107 @@
   <div class="post-content">
     <header>
       
+      <time datetime="2015-06-07T00:47:09.000Z"><a href="/2015/06/07/executing-mach-o-file/">周日, 6月 7 2015, 8:47:09 早上</a></time>
+
+  
+    <h1 class="title"><a href="/2015/06/07/executing-mach-o-file/">executing_mach_o_file</a></h1>
+  
+
+
+
+  
+  <div class="tags">
+  	<i class="fa fa-tag"></i>
+    <a href="/tags/博客，苹果文档翻译/">博客，苹果文档翻译</a>
+  </div>
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <h1 id="运行Mach-O文件">运行Mach-O文件</h1><p>为了展示代码的效果，程序必须启动线程和链接到dynamic shared libraries（动态分享库），为了与其它库和模块一起运行，你的应用程序必须在modules(.o)里面定义符号的引用，这些引用会在运行时被解决。在运行时应用程序中所有modules的symbol名字都会在共享的命名空间中使用。为了允许未来应用程序和使用库的使用，应用程序和库的开发者必须保证他们在功能和数据中选择的名字不会与其它modules冲突。<br>OX 10.1之后的双重命名空间特征把module的名字作为symbols表symbol名字的一部分添加到表里面去。这种方法确保一个module的符号名字不会与其它module的名字冲突。（然而这段的后面半段我也不知道跟前半段有什么关系。）为了展示独特的任务或者提高用户的体验，你的程序可能需要启动其它的应用程序或者运行命令行工具。为了维护高等级的操作性和提供一致的用户体验，你的应用程序需要使用特定的系统功能和框架去运行线程和运行程序。<br>这篇文章提供了OS X动态加载过程的概览，OS X中加载和链接一个程序的过程主要有两个入口：OS X 的内核和动态链接器。当你执行一个程序，内核会为程序创建处理进程，然后在程序地址空间中加载程序和动态链接器shared librariy，通常是/usr/lib/dyld。然后内核会执行动态链接器中加载库和程序引用的代码。这篇文章同样也描述了module中依赖于他们如何被定义的可视symbols和在运行时解决symbol的过程。</p>
+<h2 id="Launching_an_application">Launching an application</h2><p>当你从Finder中启动一个应用程序时，又或者当你在shell中运行程序时，系统最后会根据你的行为调用两个函数，fork和execve。fork功能创建一个进程；execve功能加载和运行程序。这里有多个不同的功能，比如execl,execv和exect，每个功能提供了不同传参和环境变量的方法到程序中。在OS X，每个这些其他的exec路径最终调用了内核路径execve。<br>当你在写Mac的app时，你会使用到Launch Services框架启动其它应用程序。Launch Services知道程序的包，并且你能够使用它打开应用程序和文档。然后Finder和Dock使用Launch Services去维护从文档类型反射到能打开它们（文档）的程序的数据库(如你想打开一个.md文件，开始数据库中是没有打开它的程序的资料，但是当你第一次选择打开它的程序时，数据库会保存能够打开.md文件的程序的数据)。Cocoa应用程序能使用类NSWorkspace启动程序和文档，NSWorkspace它本身使用了Launch Services。Launch Service最终还是调用到了fork和exec去做实际的执行代码和创建新线程。For more information on Launch Services, see <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/LaunchServicesConcepts/LSCIntro/LSCIntro.html#//apple_ref/doc/uid/TP30000999" target="_blank" rel="external"> Launch Services Programming Guide</a></p>
+<h2 id="Finding_imported_Symbols">Finding imported Symbols</h2><p>当动态链接器加载一个Mach-O文件，它会链接文件的imported symbols到他们在share library或framework中的定义。这一段描述了如何绑定一个Mach-O imported symbols到他们在其它Mach-O文件里的定义。它同样解释了查找symbol的过程。</p>
+<h3 id="Forking_and_executing_the_process">Forking and executing the process</h3><p>Mach-O执行文件包含由加载命令组成的头部，对于使用了shared libraries或者frameworks的程序来说，这些<strong>加载命令每个都定义了linker需要用到去加载程序的位置</strong>。如果你使用了xcode，linker一般是/usr/lib/dyld.<br>当你调用execve方法，内核首先会加载特定的程序文件（Mach－O文件）并且检查在文件中mach_header的结构。<strong>内核证明文件是有效的Mach－O文件，截获在header中的加载命令，然后内核加载指定的动态链接器加载命令到内存中并且在程序文件中运行动态链接器。</strong><br><strong>动态链接器加载所有主程序需要链接的shared libraries和绑定足够的符号去启动程序</strong>。然后调用入口函数，在构建时期，静态链接器从对象文件/usr/bin/crtl.o添加标准的入口函数到主执行文件中。这个功能为内核设置了运行时环境状态并且为c++对象调用静态初始器，初始化Objective-C运行时，并且调用程序的main函数。（即crtl.o文件是程序主要入口，这个入口调用main函数）。</p>
+<h3 id="Binding_Symbols">Binding Symbols</h3><p>绑定是解决一个module中对其它modules的函数和数据引用的解决过程。modules可以使用在相同或者不同的Mach-O文件中。当程序第一次加载的时候，动态链接器加载imported shared libraries到程序的地址空间中。当绑定执行时，链接器会用shared libraries中实际定义的内存地址代替执行文件中的imported reference.<br>动态链接器能在加载和执行时期的不同阶段绑定程序，它们依赖于你在构建期定义的选项：</p>
+<ol>
+<li>Just-in-time binding，动态链接器在当程序第一次使用reference的时候绑定reference。链接器根据程序什么时候被加载去读取shared libraries。然而，动态链接器不会绑定程序的符号引用直到这个符号被使用了。</li>
+<li>load-time binding 在加载程序时绑定所有imported reference</li>
+<li>prebinding load-time binding的一种形式，每个shared libraries被程序在特定的地址预绑定了。</li>
+<li>weak references在OX X10.2被引入，用作在一些系统上可用但在另外一些系统上不可用的可选实现功能。<br>如果没有使用任何参数的话，系统会默认设置参数为 just-in-time binding。</li>
+</ol>
+<h3 id="Searching_for_Symbols">Searching for Symbols</h3><p>一个symbol是一个通常代表了可执行文件的函数、数据变量或者常量的位置，程序中函数和数据的引用是对symbol的引用。当使用动态链接器路由时，为了引用一个symbol，你通常会传symbol的名字，虽然一些功能也会接受一串代表symbol顺序的数字。symbol的名字代表了一个遵循标准C调用规则的函数是函数的名字加上一个强调的前缀。（如函数名字为addNum，则symbol的名字可能为_addNum）。因此，代表main函数对应的symbol名字是_main.</p>
+<p>通过OSX v10.0开发工具创建的程序从所有加载的share libraries中添加所有的symbols到一个global list中。你程序中引用的任何symbol能够被定为在任意shared library中，因为shared library是程序的独立库。<br>OS X v10.1介绍了两级symbol命名空间特性，第一级命名空间是包含这个symbol的library，并且第二级是symbol的名字，一旦二级命名空间特性被使用且静态连接器记录imported symbols的引用时，它会记录包含symbol库的名字和symbol的名字。使用两级命名空间特性比单个命名空间多了两个优点：</p>
+<ol>
+<li>提高查找symbols的效率，使用两级命名空间时，动态链接器确切知道从哪里开始查看symbol的实现，使用单个命名空间时，动态链接器必须查找所有所有的加载库。</li>
+<li>提高向前兼容性。在单个命名空间，两个或者其它的库不能包含不同实现的但名字相同的symbol，因为动态链接器不能知道哪个library含有需要的实现。这个不是开始就出现的问题，因为静态链接器会在你第一次构建这个程序时找出所有这些问题，然而，如果你其中一个独立shared libraries之后release一个新版本的包含与你现在程序中的shared library相同symbol的版本库时，你的程序会失败运行。</li>
+</ol>
+<p>你的程序必须直接链接到包含symbol的shared library。（或者，如果库是unbrella framework的一部分，会链接到包含它的umbrella framework）。<br>当获得使用二级命名空间特性的程序构建的symbols时，你必须定义包含shared libraries的symbols的引用。<br>对于没有两级命名空间的程序来说，你能够告诉链接器去定义undefined symbols的引用，即使编译器不能找到包含他们的库。当你构建一个有这些undefined symbols的执行文件时，你正在假设一个其它的文件被作为执行文件在运行时被加载。Bundles 和shared libraries有时用了这个选项去引用被定义在主执行文件中的的symbol。然而，这会导致你没有二级命名空间中优化和兼容性的好处。通常来说直接链接一个定义了引用的执行文件会更好。然而，如果你必须链接undefined references.你能通过运行单命名空间特性和忽略undefined reference warning，通过使用选项-flat_namespace和-undefined suppress，如使用下面的命令行代码：<br>ld -o my_tool -flat_namespace -undefined suppress peace.o love.o<br>当使用两级命名空间构建执行文件且如果程序时面向OS X v10.3或者以后，你能够允许剩余的undefined symbols被动态链接器查找。为了使用这个特性的优点，使用-undefined dynamic_lookup 选项。<br>为了构建两级命名空间的执行文件，静态连接器必须能够查找每个symbol的源库。这会产生一个困难给bundles的作者和被设为单命名空间的dynamic shared libraries。为了成功构建两级命名空间，要保持下面的点：</p>
+<ol>
+<li>Bundles中需要引用定义在程序主执行文件中的symbols必须使用-bundle_loader 静态链接器选项。静态链接器然后能为undefined symbols查找主执行文件。</li>
+<li>Shared libraries中需要引用定义在程序主执行文件中的symbols必须使用没有在库引用中使用的函数动态地加载symbol，如disym或者NSLookupSymbolInImage。<br>注意：一个两级symbol命名空间能够通过使用单级symbol命名空间函数搜索。<br>你可以使用nm(1)命令去输出执行文件中的symbol表：<br><img src="./Screen Shot 2015-06-07 at 8.21.29 AM.png" alt="输出中间对象文件的symbol表"></li>
+</ol>
+<p><img src="./Screen Shot 2015-06-07 at 8.22.43 AM.png" alt="输出out文件的symbol表"></p>
+<h2 id="Scope_and_Treatment_of_Symbol_Definitions">Scope and Treatment of Symbol Definitions</h2><p>在对象文件中的符号可能存在于多个范围层次中，下面描述每个符号可能被定义的范围，并且提供c的创建不同符号类型的样本代码。</p>
+<ol>
+<li>defined external symbol. 一个被定义的 external symbol是在当前对象文件中任意被定义的符号，包含functions和data。下面的代码定义了external symbols。<br>int x = 0;<br>double y = 99;</li>
+<li><p>undefined external symbol是定义在当前文件外的任意符号，下面代码定义了两个外部符号，一个变量和一个函数,如下：<br>extern int x;<br>extern void someFunction<br>声明一个OC的属性时会产生两个方法，如：<br>@property NSString <em>text;<br>会产生- (void)setText:(NSString </em>)text;和-(NSString *)text;<br>会产生两个外部符号<br>(__TEXT,__text) non-external -[NSObject setText:]</p>
+<pre><code><span class="params">(\__TEXT,\__text)</span> non-external -[NSObject <span class="built_in">text</span>:]
+</code></pre></li>
+<li><p>common symbol，这个符号是指可能出现在多个中间对象文件，静态链接器在多个输入文件中展示多个共同的符号定义，并且复制其中最大容量的到最终的程序中。当c编译器发现一个全局变量没有初始化方法并且没有extern标示时，产生一个common symbol<br>int x;</p>
+</li>
+<li><p>private external symbol是一个不能被其它modules发现的symbol，如<br>static int x；<br>private external symbol是一个defined external symbol，它只能被在相同对象文件中的其它modules发现。标准的静态链接器改变private symbols成private defined symbols（除非你用-keep<em>private<em>externs选项标识了它）。<br>你能够通过_<em>private<em>extern<strong>关键字或者visibility(“hidden”)属性去定义一个symbol为private external symbol，如：
+</strong>private_extern</em></em> int x = 9; c only<br>int y = 99 __attribute</em></em>((visibility(“hidden”))); c and c++ ,GCC 4.0 only。<br>在OC中类的实例变量NSString *text;</p>
+</li>
+<li><p>coalesced symbol是一个可能在多个对象文件中被定义的，但是静态连接器只会在输出文件中产生一个复制。这样能省下大量的内存，如编译器必须为每个对象文件产生的C++语言特性，如虚函数表，运行时类型消息和c++模版实例化。编译器会决定哪个结构应该被聚合，你不需要做任何工作。</p>
+</li>
+<li>weak reference是一个undefined external symbol，它没必要为了程序成功链接而被找到，如果smybol不存在，动态链接器会设置这个symbol的地址为0。文件的weak references能够被使用在10.2之后。接下来的c代码描述了使用weak reference后可选的api调用：<br>if ( SomeNewFunction != NULL)<br>SomeNewFunction();<br>为了标示功能应该是作为weak reference对待的，使用weak<em>import属性作为函数类型，如下所述：<br>void SomeNewFunction(void) <em>_attribute</em></em>((weak_import));</li>
+<li>debugging symbol时编译器产生的一个符号，它允许调试器从机器码的地址反射到源代码的位置。标准的编译器产生了debugging symbols使用了Stabs格式或者SWARF格式。当使用Stabs格式，debugging symbols和其它symbols一样，都被保存在symbol表。如果使用DWARF格式，debugging symbols被保存在特定的segment:__DWARF segment。<br>使用DWARF格式，你同样需要选择保存debugging symbol在一个分割的debug-information文件，这会当你在允许全部的测试方式时减少二进制文件的大小。可使用dwarfdump命令输出调试信息。</li>
+</ol>
+
+      
+    </div>
+    <footer>
+      
+        <div class="alignleft">
+            <a href="/2015/06/07/executing-mach-o-file/#more" class="more-link"><i class="fa fa-chevron-right"></i>Read More</a>
+        </div>
+        
+        
+          <div class="alignright"> 
+            <a href="/2015/06/07/executing-mach-o-file/#comment" class="comment-link">
+              <i class="fa fa-comments"></i><span class="ds-thread-count" data-thread-key="/2015/06/07/executing-mach-o-file/">&nbsp;
+              </span>
+            </a>
+          </div>
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
       <time datetime="2015-06-05T10:37:57.000Z"><a href="/2015/06/05/executable_mach_o_file/">周五, 6月 5 2015, 6:37:57 晚上</a></time>
 
   
