@@ -154,16 +154,11 @@
 <h2 id="Scope_and_Treatment_of_Symbol_Definitions">Scope and Treatment of Symbol Definitions</h2><p>在对象文件中的符号可能存在于多个范围层次中，下面描述每个符号可能被定义的范围，并且提供c的创建不同符号类型的样本代码。</p>
 <ol>
 <li>defined external symbol. 一个被定义的 external symbol是在当前对象文件中任意被定义的符号，包含functions和data。下面的代码定义了external symbols。<br>int x = 0;<br>double y = 99;</li>
-<li><p>undefined external symbol是定义在当前文件外的任意符号，下面代码定义了两个外部符号，一个变量和一个函数,如下：<br>extern int x;<br>extern void someFunction<br>声明一个OC的属性时会产生两个方法，如：<br>@property NSString <em>text;<br>会产生- (void)setText:(NSString </em>)text;和-(NSString *)text;<br>会产生两个外部符号<br>(__TEXT,__text) non-external -[NSObject setText:]</p>
-<pre><code><span class="params">(\__TEXT,\__text)</span> non-external -[NSObject <span class="built_in">text</span>:]
-</code></pre></li>
-<li><p>common symbol，这个符号是指可能出现在多个中间对象文件，静态链接器在多个输入文件中展示多个共同的符号定义，并且复制其中最大容量的到最终的程序中。当c编译器发现一个全局变量没有初始化方法并且没有extern标示时，产生一个common symbol<br>int x;</p>
-</li>
-<li><p>private external symbol是一个不能被其它modules发现的symbol，如<br>static int x；<br>private external symbol是一个defined external symbol，它只能被在相同对象文件中的其它modules发现。标准的静态链接器改变private symbols成private defined symbols（除非你用-keep<em>private<em>externs选项标识了它）。<br>你能够通过_<em>private<em>extern<strong>关键字或者visibility(“hidden”)属性去定义一个symbol为private external symbol，如：
-</strong>private_extern</em></em> int x = 9; c only<br>int y = 99 __attribute</em></em>((visibility(“hidden”))); c and c++ ,GCC 4.0 only。<br>在OC中类的实例变量NSString *text;</p>
-</li>
-<li><p>coalesced symbol是一个可能在多个对象文件中被定义的，但是静态连接器只会在输出文件中产生一个复制。这样能省下大量的内存，如编译器必须为每个对象文件产生的C++语言特性，如虚函数表，运行时类型消息和c++模版实例化。编译器会决定哪个结构应该被聚合，你不需要做任何工作。</p>
-</li>
+<li>undefined external symbol是定义在当前文件外的任意符号，下面代码定义了两个外部符号，一个变量和一个函数,如下：<br>extern int x;<br>extern void someFunction<br>声明一个OC的属性时会产生两个方法，如：<br>@property NSString <em>text;<br>会产生- (void)setText:(NSString </em>)text;和-(NSString *)text;<br>会产生两个外部符号<br>(__TEXT,__text) non-external -[NSObject setText:]<br>(__TEXT,__text) non-external -[NSObject text:]</li>
+<li>common symbol，这个符号是指可能出现在多个中间对象文件，静态链接器在多个输入文件中展示多个共同的符号定义，并且复制其中最大容量的到最终的程序中。当c编译器发现一个全局变量没有初始化方法并且没有extern标示时，产生一个common symbol<br>int x;</li>
+<li>private external symbol是一个不能被其它modules发现的symbol，如<br>static int x；<br>private external symbol是一个defined external symbol，它只能被在相同对象文件中的其它modules发现。标准的静态链接器改变private symbols成private defined symbols（除非你用-keep<em>private<em>externs选项标识了它）。<br>你能够通过_<em>private<em>extern<strong>关键字或者visibility(“hidden”)属性去定义一个symbol为private external symbol，如：
+</strong>private_extern</em></em> int x = 9; c only<br>int y = 99 __attribute</em></em>((visibility(“hidden”))); c and c++ ,GCC 4.0 only。<br>在OC中类的实例变量NSString *text;</li>
+<li>coalesced symbol是一个可能在多个对象文件中被定义的，但是静态连接器只会在输出文件中产生一个复制。这样能省下大量的内存，如编译器必须为每个对象文件产生的C++语言特性，如虚函数表，运行时类型消息和c++模版实例化。编译器会决定哪个结构应该被聚合，你不需要做任何工作。</li>
 <li>weak reference是一个undefined external symbol，它没必要为了程序成功链接而被找到，如果smybol不存在，动态链接器会设置这个symbol的地址为0。文件的weak references能够被使用在10.2之后。接下来的c代码描述了使用weak reference后可选的api调用：<br>if ( SomeNewFunction != NULL)<br>SomeNewFunction();<br>为了标示功能应该是作为weak reference对待的，使用weak<em>import属性作为函数类型，如下所述：<br>void SomeNewFunction(void) <em>_attribute</em></em>((weak_import));</li>
 <li>debugging symbol时编译器产生的一个符号，它允许调试器从机器码的地址反射到源代码的位置。标准的编译器产生了debugging symbols使用了Stabs格式或者SWARF格式。当使用Stabs格式，debugging symbols和其它symbols一样，都被保存在symbol表。如果使用DWARF格式，debugging symbols被保存在特定的segment:__DWARF segment。<br>使用DWARF格式，你同样需要选择保存debugging symbol在一个分割的debug-information文件，这会当你在允许全部的测试方式时减少二进制文件的大小。可使用dwarfdump命令输出调试信息。</li>
 </ol>
