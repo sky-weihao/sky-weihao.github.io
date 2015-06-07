@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>在运行时加载代码 | Sky-Weihao的博客</title>
+  <meta name="author" content="Weihao Xu">
+  
+  <meta name="description" content="我是文化宫啊文化宫,欢迎光临我的博客">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="在运行时加载代码"/>
+  <meta property="og:site_name" content="Sky-Weihao的博客"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/avatar.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
+<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-368771XX-X']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class='container'>
+    
+      <li><a href="/">主页</a></li>
+    
+      <li><a href="/archives">文档</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2015-06-07T03:03:15.000Z"><a href="/2015/06/07/Using-Shared-Libraries-and-Frameworks/">周日, 6月 7 2015, 11:03:15 上午</a></time>
+
+  
+    <h1 class="title">在运行时加载代码</h1>
+  
+
+
+  
+  <div class="categories">
+  	<i class="fa fa-folder-open"></i>
+    <a href="/categories/blog/">blog</a>
+  </div>
+
+
+  
+  <div class="tags">
+  	<i class="fa fa-tag"></i>
+    <a href="/tags/博客，苹果文档翻译/">博客，苹果文档翻译</a>
+  </div>
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <p>你可能需要用到动态分享库，它能够保存可重用代码，在多个程序使用时有函数的使用优势。例如，当你开发Cocoa应用程序时，你的程序最少会链接Foudation和Application Kit框架。通过这个实践，当你的应用程序用户更新电脑系统软件框架时，你的程序能够自动利用那些改进的框架。<br>如果你开发shared libraries和作为framework bundles发布他们让其他开发者在他们的应用程序中使用，你必须保证你对那些库做出的改变不会破坏当前正在使用它们的应用程序。你在升级的shared libraries中通过暴露相同的程序接口给别的应用程序维持库的兼容性。<br>当你必须改变的你框架的api去实现一个新特性时，你能够利用同一个framework bundle中上个版本暴露出当前客户端需要的api的框架，除了暴露出新的不同的api的框架新版本。如果你跟着这篇引导，客户端的开发者在你的框架每次升级都不需要修改他们的程序。并且选择升级他们应用程序的开发者也能理由你添加到框架中的特性。为了确保使用你早版本的框架的应用程序不会被框架升级而破环，你必须把shared libraries和它们的资源打包到一个framework bundle中，并且它能够更早版本的客户端程序能继续使用它们所知道的framework版本。<br>这篇文章描述了你在运行时如何加载代码，它说明了使用shared libraries的优势并且解释了他们是打包到frameworks时如何去维护框架升级后第三方应用程序的兼容性。</p>
+<h2 id="Using_Shared_Libraries_and_Frameworks">Using Shared Libraries and Frameworks</h2><p>程序通常指用使用了不同名字的dynamic shared libraries，如dynamically linked shared libraries,dynamic libraries, DLLs,dylibs or just shared libraries.在OS X里，所有这些名字指向同一件事：库里面的代码都是在运行时被动态地加载到进程中。<br>Dynamic shared libraries允许操作系统作为一个整体去有效地使用内存。每个OS X里的进程都有它自己的内存空间。OS X的内核允许逻辑内存区域映射不同地址的多个进程中。Dynamic linker利用了这个特性的优势，通过反射相同只读的shared library代码到每个进程的地址空间中。这个结果意味着同时只有一个共享库的物理复制在内存中，尽管许多进程在同一时间使用它。Data,如变量和常量，它们都是被shared library包含的，都使用了内核的copy-on-write优化能力映射到每个程序进程中。使用了copy-on-write技术，直到一个进程尝试去改变数据之前，共享库里的数据都是被进程共享的，在这之后，内核创建一个可写的数据复制给修改它的进程。然后其他的进程继续去使用只读的shared copy（共享的复制数据）。因为，额外的保存数据的内存智慧在必要的时候被申请。<br>Dynamic shared libraries同样也提供一个方法让程序从系统升级中无缝地获得利益，当系统升级后，shared libraries也升级了，但是程序不需要。因为他们是动态地绑定到shared libraries，程序能继续调用相同的函数并且升级了的shared libraries的实现被执行。 For more information on dynamic-library development and usage,  see<a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/DynamicLibraries/000-Introduction/Introduction.html#//apple_ref/doc/uid/TP40001869" target="_blank" rel="external">Dynamic Library Programming Topics</a></p>
+<h3 id="Maintaining_Client_Application_Compatibility">Maintaining Client Application Compatibility</h3><p>这些是不同的能影响客户端程序兼容性的参数概览，你能够在构建期间设置这些参数。see Dynamic Library Design Guidelines in Dynamic Library Programming Topics.</p>
+<p>Shared libraries有两个版本数字，它们允许你创建二进制兼容的共享库版本（就是他们不需要客户端程序重新被编译）的函数导出的早期版本库</p>
+<p><strong>这篇文章接下来关于打包framework的过程，有兴趣的读者请到<a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/1-Articles/loading_code.html#//apple_ref/doc/uid/TP40001830-SW1" target="_blank" rel="external">官网链接</a>下继续学习</strong></p>
+
+      
+    </div>
+    <footer>
+      
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+  
+    <a href="/2015/06/07/executing-mach-o-file/" class="alignright next">Prev<i class="fa fa-long-arrow-right"></i></a>
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread" data-thread-key="/2015/06/07/Using-Shared-Libraries-and-Frameworks/"></div>
+<!-- Duoshuo Comment END -->
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2015 Weihao Xu
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
+<script src="/js/gallery.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+
+
+
+
+    <script type="text/javascript">
+        (function(){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+/*
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop > 0 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+*/
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+    
+    <script type="text/javascript">
+      var duoshuoQuery = {short_name:"sky-weihao"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] 
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>
