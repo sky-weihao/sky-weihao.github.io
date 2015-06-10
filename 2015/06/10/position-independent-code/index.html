@@ -1,0 +1,290 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>position-independent-code | Sky-Weihao的博客</title>
+  <meta name="author" content="Weihao Xu">
+  
+  <meta name="description" content="我是文化宫啊文化宫,欢迎光临我的博客">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="position-independent-code"/>
+  <meta property="og:site_name" content="Sky-Weihao的博客"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/avatar.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
+<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-368771XX-X']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class='container'>
+    
+      <li><a href="/">主页</a></li>
+    
+      <li><a href="/archives">文档</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2015-06-10T07:54:40.000Z"><a href="/2015/06/10/position-independent-code/">周三, 6月 10 2015, 3:54:40 下午</a></time>
+
+  
+    <h1 class="title">position-independent-code</h1>
+  
+
+
+  
+  <div class="categories">
+  	<i class="fa fa-folder-open"></i>
+    <a href="/categories/blog/">blog</a>
+  </div>
+
+
+  
+  <div class="tags">
+  	<i class="fa fa-tag"></i>
+    <a href="/tags/博客，苹果文档翻译/">博客，苹果文档翻译</a>
+  </div>
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <p>位置独立代码（Position-independent code)，是在PowerPC环境代码生成技术的名字，它允许动态链接器在不固定的虚拟内存地址中加载一个区域代码。除了位置独立代码生成的一些形式之外，操作系统会把你希望共享的代码放置在虚拟内存固定地址中，这会导致维护操作系统时相当困难。例如，它基本不会支持shared libraries和frameworks，因为他们都需要预先分配一个永远不会变的地址。<br>Mach-O位置独立代码的设置是基于观察到__DATA segment通常定位在__TEXT segment常量偏移的位置。因此，动态加载器在加载任何Mach-O文件时，从来不会移动一个文件的__TEXT segment相对于__DATA segment的位置（即偏移量都是常量）。因此，一个函数能使用它当前的地址加上一个固定的偏移量去决定它想要获取数据的位置。在Mach-O文件里的所有segment，不仅仅是__TEXT和__DATA segment，相对于其他segments来说都有一个固定的偏移量。</p>
+<h2 id="Eliminating_Position-Independent_Code_Reference">Eliminating Position-Independent Code Reference</h2><p>位置独立代码通常被用于shared libraries 和 bundles，他们会允许动态加载器在加载期间重新把它们定位到不同的地址空间。然而，它没有必要用于通常属于虚拟内存相同地址的应用程序。GCC3.1介绍一个新的选择-mdynamic-no-pic。这个选项同时减少应用程序执行代码的大小，并且通过消除位置独立代码的引用从而提升性能，并且会保存shared libraries的间接调用和间接引导到undefined symbols。如果你使用xcode去创建程序，这个选项默认被选中。</p>
+<p><strong>Listing 1  C source code example for position-independent code</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> s &#123; <span class="keyword">int</span> member1; <span class="keyword">int</span> member2; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> s bar = &#123;<span class="number">1</span>,<span class="number">2</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">foo</span><span class="params">(<span class="keyword">void</span>)</span></span><br><span class="line"></span>&#123;</span><br><span class="line"><span class="keyword">return</span> bar.member2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Listing 2  Position-independent code generated from the C example (with addresses in the left column)</strong></p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">.<span class="keyword">text</span></span><br><span class="line">; The <span class="function"><span class="keyword">function</span> <span class="title">foo</span></span></span><br><span class="line">.align <span class="number">2</span></span><br><span class="line">.globl <span class="title">_foo</span></span><br><span class="line"><span class="number">0x0</span>     <span class="title">_foo</span>:       mflr r0                     ; save <span class="operator">the</span> link register (LR)</span><br><span class="line"><span class="number">0x4</span>                 bcl <span class="number">20</span>,<span class="number">31</span>,L1$pb             ; Use <span class="operator">the</span> branch always instruction</span><br><span class="line">;  that does <span class="operator">not</span> affect <span class="operator">the</span> link</span><br><span class="line">;  register stack <span class="built_in">to</span> <span class="built_in">get</span> <span class="operator">the</span> address</span><br><span class="line">;  <span class="operator">of</span> L1$pb <span class="keyword">into</span> <span class="operator">the</span> LR.</span><br><span class="line"><span class="number">0x8</span>     L1$pb:      mflr r10                    ; <span class="keyword">then</span> move LR <span class="built_in">to</span> r10</span><br><span class="line"><span class="number">0xc</span>                 mtlr r0                     ; restore <span class="operator">the</span> previous LR</span><br><span class="line">; bar is located <span class="keyword">at</span> L1$pc + distance</span><br><span class="line"><span class="number">0x10</span>                addis r9,r10,ha16(<span class="title">_bar-</span>L1$pb); L1$pb plus high <span class="number">16</span> bits <span class="operator">of</span> distance</span><br><span class="line"><span class="number">0x14</span>                la r9,lo16(<span class="title">_bar-</span>L1$pb)(r9)  ; plus low <span class="number">16</span> <span class="operator">of</span> distance</span><br><span class="line">; =&gt; r9 now <span class="operator">contains</span> address <span class="operator">of</span> bar</span><br><span class="line"><span class="number">0x18</span>                lwz r3,<span class="number">4</span>(r9)                ; <span class="constant">return</span> bar.member2</span><br><span class="line"><span class="number">0x1c</span>                blr</span><br><span class="line">.data</span><br><span class="line">; The initialized structure bar</span><br><span class="line">.align <span class="number">2</span></span><br><span class="line">.globl <span class="title">_bar</span></span><br><span class="line"><span class="number">0x20</span>    <span class="title">_bar</span>:       .<span class="keyword">long</span> <span class="number">1</span>                     ; member1’s initialized <span class="built_in">value</span></span><br><span class="line"><span class="number">0x24</span>                .<span class="keyword">long</span> <span class="number">2</span>                     ; member2’s initialized <span class="built_in">value</span></span><br><span class="line">To calculate <span class="operator">the</span> address <span class="operator">of</span> <span class="title">_bar</span>, <span class="operator">the</span> generated code adds <span class="operator">the</span> address <span class="operator">of</span> <span class="operator">the</span> L1$pb symbol (<span class="number">0x8</span>) <span class="built_in">to</span> <span class="operator">the</span> distance <span class="built_in">to</span> bar. The distance <span class="built_in">to</span> bar <span class="built_in">from</span> <span class="operator">the</span> address <span class="operator">of</span> L1$pb is <span class="operator">the</span> <span class="built_in">value</span> <span class="operator">of</span> <span class="operator">the</span> expression <span class="title">_bar</span> - L1$pb, which is <span class="number">0x18</span> (<span class="number">0x20</span> - <span class="number">0x8</span>).</span><br></pre></td></tr></table></figure>
+<p>为了计算_bar的地址，产生出来的代码会添加L1\$pb symbol(0x8)的地址到bar的距离。从L1\$pb的地址到bar的距离是表达式 _bar - L1$pb的值，为 0x18 (0x20 - 0x8).</p>
+<h2 id="Relocating_Position-Independent_Code">Relocating Position-Independent Code</h2><p>为了支持中间对象文件的重定位， Mach-O支持一个不同section的重定位入口格式。重定位的入口在<a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html#//apple_ref/doc/uid/TP40000895" target="_blank" rel="external">OS X ABI Mach-O File Format Reference</a>被描述</p>
+<p>每一个 add-immediate指令都代表了两个重定位的入口。 对于addis指令，下面这张表列举了两个重定位入口。第一个重定向的入口是：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">r_scattered</th>
+<th style="text-align:right">1—true</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">r_pcrel</td>
+<td style="text-align:right">0—false</td>
+</tr>
+<tr>
+<td style="text-align:left">r_length</td>
+<td style="text-align:right">2—indicating 4 bytes</td>
+</tr>
+<tr>
+<td style="text-align:left">r_type</td>
+<td style="text-align:right">PPC_RELOC_HA16_SECTDIFF</td>
+</tr>
+<tr>
+<td style="text-align:left">r_address</td>
+<td style="text-align:right">0x10—the address of the addis instruction</td>
+</tr>
+<tr>
+<td style="text-align:left">r_value</td>
+<td style="text-align:right">0x20—the address of the symbol _bar</td>
+</tr>
+</tbody>
+</table>
+<p>The values of the second relocation entry are:<br>| r_scattered      |     1—true |<br>| :———— | ————:|<br>| r_pcrel    |   0—false |<br>|    r_length        |   2—indicating 4 bytes        |<br>|r_type |PPC_RELOC_PAIR |<br>| r_address| 0x18—the low 16 bits of the expression (_bar - L1$pb)|<br>|r_value |0x8—the address of the symbol L1$pb |</p>
+<p>The first relocation entry for the la instruction (at address 0x14 in the example) is:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">r_scattered</th>
+<th style="text-align:right">1—true</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">r_pcrel</td>
+<td style="text-align:right">0—false</td>
+</tr>
+<tr>
+<td style="text-align:left">r_length</td>
+<td style="text-align:right">2—indicating 4 bytes</td>
+</tr>
+<tr>
+<td style="text-align:left">r_type</td>
+<td style="text-align:right">PPC_RELOC_LO16_SECTDIFF</td>
+</tr>
+<tr>
+<td style="text-align:left">r_address</td>
+<td style="text-align:right">0x14—the address of the addi instruction</td>
+</tr>
+<tr>
+<td style="text-align:left">r_value</td>
+<td style="text-align:right">0x20—the address of the symbol _bar</td>
+</tr>
+</tbody>
+</table>
+<p>The values of the second relocation entry are:<br>| r_scattered      |     1—true |<br>| :———— | ————:|<br>| r_pcrel    |   0—false |<br>|    r_length        |   2—indicating 4 bytes        |<br>|r_type |PPC_RELOC_PAIR |<br>| r_address| 0x0—the high 16 bits of the expression (_bar - L1$pb)|<br>|r_value |0x8—the address of the symbol L1$pb |</p>
+
+      
+    </div>
+    <footer>
+      
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+  
+    <a href="/2015/06/10/indirect-addressing/" class="alignright next">Prev<i class="fa fa-long-arrow-right"></i></a>
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread" data-thread-key="/2015/06/10/position-independent-code/"></div>
+<!-- Duoshuo Comment END -->
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2015 Weihao Xu
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
+<script src="/js/gallery.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+
+
+
+
+    <script type="text/javascript">
+        (function(){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+/*
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop > 0 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+*/
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+    
+    <script type="text/javascript">
+      var duoshuoQuery = {short_name:"sky-weihao"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] 
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>
