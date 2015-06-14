@@ -1,0 +1,246 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Dynamic Library Usage Guidelines | Sky-Weihao的博客</title>
+  <meta name="author" content="Weihao Xu">
+  
+  <meta name="description" content="我是文化宫啊文化宫,欢迎光临我的博客">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="Dynamic Library Usage Guidelines"/>
+  <meta property="og:site_name" content="Sky-Weihao的博客"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/avatar.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
+<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-368771XX-X']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class='container'>
+    
+      <li><a href="/">主页</a></li>
+    
+      <li><a href="/archives">文档</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2015-06-14T06:58:20.000Z"><a href="/2015/06/14/Dynamic-Library-Usage-Guidelines/">周日, 6月 14 2015, 2:58:20 下午</a></time>
+
+  
+    <h1 class="title">Dynamic Library Usage Guidelines</h1>
+  
+
+
+  
+  <div class="categories">
+  	<i class="fa fa-folder-open"></i>
+    <a href="/categories/blog/">blog</a>
+  </div>
+
+
+  
+  <div class="tags">
+  	<i class="fa fa-tag"></i>
+    <a href="/tags/博客，苹果文档翻译/">博客，苹果文档翻译</a>
+  </div>
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <p>动态加载器的兼容性函数提供了一个轻便的和有效的方法去在运行时加载代码。然而，不正确地使用一个函数会减低app的性能。这篇文章展示了如何正确地加载和在app中使用动态库。<br>动态库帮助去分散一个app的函数到不同中module中，这能让他们需要时才被加载。动态库能够在它们启动或者运行时才被加载。那些在启动时被加载的称之为dependent libraries。在运行时被加载的称之为dynamically loaded libraries。你通过linking那些动态库定义了你的app依赖的动态库。然而，使用dynamically loaded libraries的动态库比使用depedent libraries更有效。因为，你应该在准备使用symbols时才打开库并且在他们用完之后关闭它们。在一些例子上，这个系统当它决定了哪些库没有被使用时会卸载动态加载库。<br>这篇文章使用word image去指一个app文件或者动态库。app的二进制文件中包含了app的代码和从静态库中使用的代码。这个app在启动时或运行时加载的动态库是seperate images的。</p>
+<h2 id="Opening_Dynamic_Libraries">Opening Dynamic Libraries</h2><p>动态加载器会在一个image打开的时候加载那个image的独立库；即当一个app被加载或者当一个动态库被打开时。动态加载器懒绑定被dependent库输出的symbol的引用。懒绑定指那些symbol引用只在image实际使用symbols时才被绑定的引用。使用一个调试测试，你能够定义所有被一个库输出的symbol引用都在动态加载器打开库时被绑定。你能在产生动态库时使用-bind_at_load命令选项。</p>
+<p>为了在你的images中使用一个不是dependent library的动态库，使用dlopen函数。这个函数告诉动态加载器去加载一个特性的动态库到当前进程的一个地址空间中。这个函数同样允许你去定义动态加载器什么时候去绑定一个库的引用到它的独立库中相关的输出symbol，和是否在当前进程中的全局范围或者本地范围放置库的被输出symbols。这个函数返回一个名为library handle的句柄。这个句柄代表在调用dlsym和dlclose时的dynamically loaded library。这个库的句柄在哪里查找symbol提供了dlsym一个有限的领域。这个客户端在当它完成使用dynamically loaded lirabry必须调用dlclose（如当打开库的module已经完成任务的时候）</p>
+<p>一个动态库可能它自己也有一个dependent libraries，为了查出动态库依赖于哪些库，使用otool －L <library.>命令。在使用一个库之前，你必须确保所有的独立库都在你的电脑中。否者的话，动态加载器在启动时或者使用dlopen打开你的库时不会加载你的app或者库。</library.></p>
+<p>一个进程能够打开数次打开同一个动态库而不用dlclose等去关闭它，dlopen函数返回和第一次返回相同的library句柄。但是它同样提高与这个句柄相关的引用计数。调用dlclose去减少library句柄的引用计数。因此，你每次调用dlopen之后必须平衡调用dlclose。当一个库句柄的引用计数为零时，动态加载器可能从app的地址空间中移除这个库。</p>
+<h2 id="The_Library_Search_Process">The Library Search Process</h2><p>dlopen的第一个参数是要打开动态库的名字，这个可能是一个文件名或者是部分或者全部的有效的路径名。例如，libCelsus.dylib，lib/libCelsus.dylib或者是/usr/local/libCelsus.dylib。<br>动态加载器查找通过一系列的环境变量定义的（如header search path,library search path）和线程当前工作目录的路径中去搜索libraries。这些变量在被定义的时候，必须包含一个被冒号分割开的多个路径，这些路径指明动态加载器在哪里查找这些库，table 1列出了这些变量：</p>
+<p><img src="/img/Dymamic Library Usage Guidelines_img1.png" alt=""></p>
+<p>当库的名字是一个文件名（就是没有包含任何目录名），动态加载器会搜索多个位置直到找到它位置（位置有下面的这些）：</p>
+<ol>
+<li>$LD_LIBRARY_PATH</li>
+<li>$DYLD_LIBRARY_PATH</li>
+<li>线程当前工作目录</li>
+<li>$DYLD_FALLBACK_LIBRARY_PATH</li>
+</ol>
+<p>当库的名字里包含了至少一个目录名时，就是指名字是一个路径名（相对或者绝对路径），动态加载器会根据以下顺序查找这个库：</p>
+<ol>
+<li>使用文件名的 $DYLD_LIBRARY_PATH</li>
+<li>特定的路径</li>
+<li>使用文件名的 $DYLD_FALLBACK_LIBRARY_PATH </li>
+</ol>
+<p>例如，你在之前设置的在下面表中的环境变量<br><img src="/img/Dymamic Library Usage Guidelines_img2.png" alt=""></p>
+<p>加入你的app使用dlopen打开文件名为libCelsus.dylib，动态加载器会尝试使用下面路径打开库<br><img src="/img/Dymamic Library Usage Guidelines_img3.png" alt=""></p>
+<p>如果app使用路径名/libs/libCelsus.dylib调用dlopen，动态加载器尝试使用这些路径名去查找库<br><img src="/img/Dymamic Library Usage Guidelines_img4.png" alt=""></p>
+<h2 id="Specifying_the_Scope_and_Binding_Behavior_of_Exported_Symbol">Specifying the Scope and Binding Behavior of Exported Symbol</h2><p>dlopen第二个参数定义了两个属性：当前线程中库的exported symbols的范围和什么时候绑定app的引用到这些symbol中。<br>Symbol的范围直接影响了app的性能。因此，你为你的app设置在运行时打开的库的合适的范围是很重要的。<br>dynamically loaded library的被输出的symbol可以是当前进程两级范围中的一级：全局和本地scope。在这些scope中的主要区别是在全局范围中的symbols在进程中的所有image是可用的，包含其他的一些dynamically loaded libraries。local scope的symbols只能够被用在打开这个library的image中。See <strong>Using Symbols</strong>。</p>
+<p>当动态加载器查找symbols时，它会在搜索范围内与每个symbol的字符串进行比较。减少symbol的数量动态加载器需要去查找目标的symbol会提升你app的性能。打开所有的dynamically loaded libraries到local scope而不是全局scope会提升查找symbol的性能。<br>你永远不需要在进程的全局范围内打开一个动态库才能让所有在app中的modules能使用它的symbols。替代的方式是，每个使用到这个库的module应该在它的locol scope中打开它。在结束时，module应该关闭这个库。如果你想要library中被export的symbol能够在进程所有的images中使用，考虑把库做成app的dependent 库。<br>使用去定义symbol scope的参数也同样定义了dynamically loaded library中undefined external symbols是什么时候被resolve的（或者是与他们库中的自己独立库的library绑定）。Dynamically loaded library中undefined external symbols能够马上或之后被resolve。如果一个客户端的app使用了在dlopen一个动态库时马上绑定，动态加载器会在客户端控制权返回之前绑定所有的undefined external symbols。如Listing 1 展示了动态加载器的输出信息当DY_PRINT_BINDING环境变量被设置和一个客户端的app加载一个名为libPerson.dylib的dynamic library。<br><strong>Listing 1  Bindings resolved during call to dlopen using immediate binding</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">dyld:</span> lazy <span class="string">bind:</span> <span class="string">client:</span><span class="number">0x107575050</span> = libdyld.<span class="string">dylib:</span>_dlopen, *<span class="number">0x107575050</span> = <span class="number">0x7FFF88740922</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9000</span> = libdyld.<span class="string">dylib:</span>dyld_stub_binder, *<span class="number">0x1075A9000</span> = <span class="number">0x7FFF887406A0</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9220</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_cache, *<span class="number">0x1075A9220</span> = <span class="number">0x7FFF7890EC10</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9248</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_cache, *<span class="number">0x1075A9248</span> = <span class="number">0x7FFF7890EC10</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9228</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_vtable, *<span class="number">0x1075A9228</span> = <span class="number">0x7FFF7890CF60</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9250</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_vtable, *<span class="number">0x1075A9250</span> = <span class="number">0x7FFF7890CF60</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9218</span> = <span class="string">CoreFoundation:</span>_OBJC_CLASS_$_NSObject, *<span class="number">0x1075A9218</span> = <span class="number">0x7FFF77C40BA8</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9238</span> = <span class="string">CoreFoundation:</span>_OBJC_METACLASS_$_NSObject, *<span class="number">0x1075A9238</span> = <span class="number">0x7FFF77C40B80</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9240</span> = <span class="string">CoreFoundation:</span>_OBJC_METACLASS_$_NSObject, *<span class="number">0x1075A9240</span> = <span class="number">0x7FFF77C40B80</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9260</span> = <span class="string">CoreFoundation:</span>___CFConstantStringClassReference, *<span class="number">0x1075A9260</span> = <span class="number">0x7FFF77C72760</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9280</span> = <span class="string">CoreFoundation:</span>___CFConstantStringClassReference, *<span class="number">0x1075A9280</span> = <span class="number">0x7FFF77C72760</span></span><br></pre></td></tr></table></figure>
+<p>第一个输出信息指那些客户端app的_dlopen的undefined symbol被绑定了。剩余的信息是动态加载器在动态库中展示的绑定信息，作为返回调用路径控制之前加载进程的一部分。当使用懒绑定时，动态加载器只解决客户端到dlopen函数的引用，返回控制到调用路径更加迅速。<br>一旦一个库使用了dlopen打开，为它定义的范围不能被随后调用dlopen打开相同库的方法改变。例如，如果一个进程打开了一个没有被加载进local scope的库，并且随后在global scope中打开了相同的库，打开的library依然是local状态。即是指之后的调用病没有时库export的symbol变成global scope有效。在相同进程中甚至在这个库在被重新打开之前已经被关闭一样也是这样。</p>
+<p>Immediate binding会减慢加载动态库的过程，尤其当这些库包含多个undefined external symbols时。然后，马上绑定有利于开发和测试动态库，因为当动态加载器不能resolve所有dynamically loaded library中undefined external symbol时，app会以错误终结。当你开发一个应用时，你就应该使用懒加载，因为undefined external symbol只有在需要时才被绑定。通过这种方式加载动态库能帮你的app对用户更有响应性。<br>在dependent libraries中的external undefined symbols在他们第一次使用时被绑定，除非客户端的编译命令包含-bind_at_load选项。See ld man page for detail.</p>
+
+      
+    </div>
+    <footer>
+      
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+  
+    <a href="/2015/06/11/Overview-of-Dynamic-Libraries/" class="alignright next">Prev<i class="fa fa-long-arrow-right"></i></a>
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread" data-thread-key="/2015/06/14/Dynamic-Library-Usage-Guidelines/"></div>
+<!-- Duoshuo Comment END -->
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2015 Weihao Xu
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
+<script src="/js/gallery.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+
+
+
+
+    <script type="text/javascript">
+        (function(){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+/*
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop > 0 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+*/
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+    
+    <script type="text/javascript">
+      var duoshuoQuery = {short_name:"sky-weihao"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] 
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>
