@@ -117,13 +117,8 @@
 </ol>
 <h4 id="Section">Section</h4><p>__TEXT和__DATA段可能包含了一系列的标准sections。__OBJC segment包含了一系列的是Objective-C编译器私有的段。需要知道的是静态链接器和文件分析工具会使用section的类型和数据去定义它们如何处理section。</p>
 <h5 id="__TEXT_segment">__TEXT segment</h5><p>__text section 有可执行的机器码，编译器只会把可执行的代码放到这一个section，没有其它任何形式的表或者数据。<br>__cstring section c的字符串常量，静态链接器会在构造最终的程序时把c的字符串常量合并（删除冗余的常量）<br>__picsymbol_stub 独立位置的间接符号集合Position-Independent Code” in Mach-O Programming Topics<br>__symbol_stub 间接符号集合<br>__const 初始化的常量变量，编译器会把所有声明为const的不能重定位的数据放到这里。（编译器会把未初始化的常量变量放到__zero-filled section中<br>__literal4 编译器会把单精度的浮点数放到这个section<br>__literal8 编译器会把双精度的浮点数放到这个section</p>
-<p><strong>DATA segment
-</strong>data 初始化的可变变量，如可写的c字符串和数据数组等。<br><strong>la_symbol_ptr lazy的符号指针，间接引用了被import到不同文件的功能函数
-</strong>nl_symbol_ptr 非lazy的符号指针，间接引用了被import到不同文件的数据项（See “Position-Independent Code” in Mach-O Programming Topics for more information.）<br><strong>dyld 动态链接器的的占位符段，好像然而并没什么用
-</strong>const 初始化的可重定位的常量变量<br><strong>module_init_func module的初始化函数，c++编译器会把静态构造器放到这里。
-</strong>bss 未初始化的静态变量，如static int i<br>__common 未初始化的被import的符号定义，如被定义在全局范围中的int i;</p>
-<p><strong>IMPORT
-</strong>jump_table 在动态库中调用函数的符号集合<br>__pointers 非lazy的符号指针，这些用于直接引用被import到不同文件的功能函数</p>
+<p><strong>DATA segment<br>\</strong>data 初始化的可变变量，如可写的c字符串和数据数组等。<br>__la_symbol_ptr lazy的符号指针，间接引用了被import到不同文件的功能函数<br>__nl_symbol_ptr 非lazy的符号指针，间接引用了被import到不同文件的数据项（See “Position-Independent Code” in Mach-O Programming Topics for more information.）<br>__dyld 动态链接器的的占位符段，好像然而并没什么用<br>__const 初始化的可重定位的常量变量<br>__module_init_func module的初始化函数，c++编译器会把静态构造器放到这里。<br>__bss 未初始化的静态变量，如static int i<br>__common 未初始化的被import的符号定义，如被定义在全局范围中的int i;</p>
+<p><strong>IMPORT<br>\</strong>jump_table 在动态库中调用函数的符号集合<br>__pointers 非lazy的符号指针，这些用于直接引用被import到不同文件的功能函数</p>
 <p>可以使用xcrun size -x -l -m a.out命令查看有哪些数据段<br><img src="/img/executable_mach_o_file_img_4.png" alt=""></p>
 <h3 id="Data_Types">Data Types</h3><p><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html#//apple_ref/doc/uid/TP40000895" target="_blank" rel="external">详情查看 OS X ABI Mach-O File Format Reference</a></p>
 
