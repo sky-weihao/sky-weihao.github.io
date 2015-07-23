@@ -96,7 +96,7 @@
     </header>
     <div class="entry">
       
-        <p>间接寻址是一种代码生成技术的名字，它允许被定义在文件中的symbols能够被另外一个文件引用，并且不需要引用文件知道任何有关定义这些symbol文件的布局。因此，定义文件能够被独立地修改。间接寻址最小化了动态链接器需要修改的地址，这回提高代码分享和提高效率。<br>当一个文件使用了定义在另一个文件的数据时，它会创建symbol引用，一个symbol reference标志了symbol是属于哪个文件的和它引用的symbol，有两种类型的symbol reference：non lazy和lazy.</p>
+        <p>间接寻址是一种代码生成技术的名字，它允许被定义在文件中的symbols能够被另外一个文件引用，并且不需要引用文件知道任何有关定义这些symbol文件的布局。因此，定义文件能够被独立地修改。间接寻址最小化了动态链接器需要修改的地址，这会提高代码分享和提高效率。<br>当一个文件使用了定义在另一个文件的数据时，它会创建symbol引用，一个symbol reference标志了symbol是属于哪个文件的和它引用的symbol，有两种类型的symbol reference：non lazy和lazy.</p>
 <ol>
 <li><p>Non-lazy symbol references在一个module被加载的时候被动态链接器resolve（把symbol转化为对应data或function的内存地址）。<br>一个non-lazy symbol引用的本质是一个symbol 指针，编译器会产生non-lazy symbol的引用给数据symbols或者函数地址。</p>
 </li>
@@ -105,7 +105,7 @@
 </ol>
 <p>Lazy symbol引用是由一个symbol指针和一个symbol stub组成，一小量没有直接引用和符号指针的代码。编译器当它遇到调用另外一个文件的函数时会产生lazy symbol引用</p>
 <p>接下来的段落描述了symbol引用时在PowePc和IA-32架构上如何被实现的，如果想知道PowerPC和IA-32的详细信息，see<a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/Assembler/000-Introduction/introduction.html#//apple_ref/doc/uid/TP30000851" target="_blank" rel="external">OS X Assembler Reference</a></p>
-<h2 id="PowePC_符号引用">PowePC 符号引用</h2><p>在PowerPC架构里，当你产生被定义在其它文件的函数调用时，编译器会产生symbol stub和一个lazy symbol指针。Lazy symbol指针是一个地址，它最初设置是为了调用粘合函数dyld_stub_binding_helper中的粘合代码。这个粘合函数调用了动态链接器的功能函数，这些函数会调用用于绑定stub的实际工作。在dyld_stub_binding_helper返回之后，lazy 指针指向了外部函数的实际地址中。<br>下列这些在Listing 1里的简单的代码样本产生了两个不同类型的symbol stubs，无论它是否使用position-indenpendent代码生成技术。Listing 2展示了间接寻址而不用position-independent代码。Listing 3展示了间接寻址和position-indenpendent的代码。</p>
+<h2 id="PowePC_符号引用">PowePC 符号引用</h2><p>在PowerPC架构里，当你产生被定义在其它文件的函数调用时，编译器会产生symbol stub和一个lazy symbol指针。Lazy symbol指针是一个地址，它最初设置是为了调用粘合函数dyld_stub_binding_helper中的粘合代码。这个粘合函数调用了动态链接器的功能函数，这些函数会调用用于绑定stub的实际工作。在dyld_stub_binding_helper返回之后，lazy 指针指向了外部函数的实际地址中。<br>下列这些在Listing 1里的简单的代码样本产生了两个不同类型的symbol stubs，根据它是否使用position-indenpendent代码生成技术。Listing 2展示了间接寻址而不用position-independent代码。Listing 3展示了间接寻址和position-indenpendent的代码。</p>
 <p><strong>Listing 1  C code example for indirect function calls</strong></p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">void</span> <span class="title">bar</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(<span class="keyword">void</span>)</span></span><br><span class="line"></span>&#123;</span><br><span class="line">bar();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><strong>Listing 2  Example of an indirect function call</strong></p>
