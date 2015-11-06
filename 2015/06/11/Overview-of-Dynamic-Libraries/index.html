@@ -6,7 +6,7 @@
   <title>Overview of Dynamic Libraries | Sky-Weihao的博客</title>
   <meta name="author" content="Weihao Xu">
   
-  <meta name="description" content="我是文化宫啊文化宫,欢迎光临我的博客">
+  <meta name="description" content="123">
   
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -97,7 +97,7 @@
     <div class="entry">
       
         <p>决定app性能的两个重要因素是他们的启动时间和他们的内存跟踪。当程序运行时减少一个app的执行的文件的大小和最少化它内存的使用率会使app更快地启动并且使用更少的内存。使用动态库来代替静态库回减少一个app执行文件的大小。他们同样也能让app去在加载库被需要时才加载库的特定功能，而不是在他们启动的时候就被加载。这个特性能够减少启动时间和让内存更有效地利用。<br>这篇文章介绍了动态库和展示如何使用动态库去减少文件大小和（减少）最初使用它们的内存足迹。这篇文章同样提供了apps在运行时用作去与动态库一起工作的动态加载器兼容性函数的概况。</p>
-<h2 id="What_Are_Dynamic_Libraries?">What Are Dynamic Libraries?</h2><p>大多数的app的功能是被实现在libraries的执行文件中。当一个app通过静态连接器与一个library链接时，app所使用到的代码会被复制到生成的执行文件中。一个静态链接器收集了编译了的源代码，即object code（对象文件，在<a href="http://sky-weihao.github.io/2015/06/05/building_mach_o_file/" target="_blank" rel="external">能构建的Mach-O文件</a>中能看到）。然后library中的代码会被编写进一个执行文件中，这个执行文件在运行期被完全地加载到内存中。这类会变成app执行文件的library被称之为static library。static library是对象文件的集合。</p>
+<h2 id="What_Are_Dynamic_Libraries?">What Are Dynamic Libraries?</h2><p>大多数的app的功能是被实现在libraries的执行文件中。当一个app通过静态连接器与一个library链接时，app所使用到的代码会被复制到生成的执行文件中。一个静态链接器收集了编译了的源代码，即object code（对象文件，在<a href="http://sky-weihao.github.io/2015/06/05/building_mach_o_file/">能构建的Mach-O文件</a>中能看到）。然后library中的代码会被编写进一个执行文件中，这个执行文件在运行期被完全地加载到内存中。这类会变成app执行文件的library被称之为static library。static library是对象文件的集合。</p>
 <p>当一个app被启动的时候，这个app的代码（包含了所链接的static library的代码）会被加载到app的地址空间中。链接大量的static library到一个app会产生大量的app执行文件。Figure 1展示了使用了static library实现的函数在app的内存用量。有大量执行文件的应用程序会启动很慢的启动时间并且有大量的内存足迹。同样，当一个静态库升级之后，它的客户端应用程序不会得益于静态库所做的提升。为了获得那些优化的性能，app的开发者必须链接app的对象文件的新版本库。并且app的用户还必须用新版本的静态库的复制件代替之前的库。因此，保持一个app中static library的最新功能状态需要开发者和用户的破坏性工作。</p>
 <p><img src="/img/Overview_of_Dynamic_Libraries_img1.png" alt=""></p>
 <p>一个更好的方法是当实际需要的时候app才去加载代码到它的地址空间中，无论是在加载时还时运行时。这类的能提供这方面便利的库称之为动态库。动态库是没有被静态地链接到客户端的app；它们不会变成执行文件的一部分。反之，动态库能够在一个app启动或者运行时才被加载。<br>Figure 2展示了一些功能用了动态库实现会减少使用静态库时app运行的内存空间。<br><img src="/img/Overview_of_Dynamic_Libraries_img2.png" alt=""></p>
