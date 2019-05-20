@@ -1,0 +1,231 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>Hello数据库使用异常情况总结 | Sky-Weihao的博客</title>
+  <meta name="author" content="Weihao Xu">
+  
+  <meta name="description" content="欢迎光临寒舍">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="Hello数据库使用异常情况总结">
+  <meta property="og:site_name" content="Sky-Weihao的博客">
+
+  
+    <meta property="og:image" content="undefined">
+  
+
+  <link href="/avatar.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+<link rel="stylesheet" href="/css/style.css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-368771XX-X']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+</html>
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class="container">
+    
+      <li><a href="/">主页</a></li>
+    
+      <li><a href="/archives">文档</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src>
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2019-05-20T03:04:51.000Z"><a href="/2019/05/20/reuse-block/">周一, 5月 20 2019, 11:04:51 上午</a></time>
+
+  
+    <h1 class="title">Hello数据库使用异常情况总结</h1>
+  
+
+
+  
+  <div class="categories">
+  	<i class="fa fa-folder-open"></i>
+    <a href="/categories/blog/">blog</a>
+  </div>
+
+
+  
+  <div class="tags">
+  	<i class="fa fa-tag"></i>
+    <a href="/tags/博客，苹果文档翻译/">博客，苹果文档翻译</a>
+  </div>
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <p>Hello数据库使用异常情况总结 1、设置了PRAGMA journal_mode = OFF<br>OFF日志模式让SQLite放弃在开始时创建回滚日志，它会禁用SQLite的原子提交和回滚功能，让ROLLBACK命令不可用。如果使用OFF日志模式的事务在中间某时刻发生崩溃或断电，则数据库文件不能恢复，可能会被损坏。</p>
+<p>日志模式<br>SQLite中日志模式主要有DELETE和WAL两种，其他几种比如TRUNCATE，PERSIST，MEMORY基本原理都与DELETE模式相同，不作详细展开。DELETE模式采用影子分页技术(Shadow paging)，DELETE模式下，日志中记录的变更前数据页内容；WAL模式下，日志中记录的是变更后的数据页内容。事务提交时，DELETE模式将日志刷盘，将DB文件刷盘，成功后，再将日志文件清理；WAL模式则是将日志文件刷盘，即可完成提交过程。那么WAL模式下，数据文件何时更新呢？这里引入了检查点概念，检查点的作用就是定期将日志中的新页覆盖DB文件中的老页，并通过参数wal_autocheckpoint来控制检查点时机，达到权衡读写的目的。<br>DELETE模式下，写事务直接更新db-page，并将old-page写入日志，读事务则直接读db-page，因为db-page中保存了提交的所有事务的更新。事务提交后，直接将日志文件删除；若事务需要回滚，则将日志中old-page中的内容覆盖db-page，恢复原始内容。WAL模式下，写事务将更新写到日志文件中，不更新db-page，事务提交时，也不影响db-page，只是将日志持久化而已。若事务回滚，则不将日志写入文件即可。由于最新的数据在日志文件中，那么如何读取到最新的数据呢？WAL模式通过end-mark(事务提交位点)达到这一目的。具体而已，事务开始时，会首先扫描日志文件，获取最近一个end-mark，在读取数据时，首先会判断page是否在wal日志文件中存在，因为同一个page，一定是wal文件中的比db文件中的要新。如果存在，则使用，否则，再从db文件中获取指定的page。从流程上来看，这个过程比较慢，因为极端情况下，每次读都需要扫描wal文件和db文件。为了提高性能，WAL模式中有一个wal-index文件，这个文件记录了页号和该页在WAL文件中的偏移，并且wal-index文件采用共享缓存实现，从文件名也可以看到，后缀是.shm，因此判断page是否在wal文件存在的操作实质是一次内存读。wal-index采用hash表存储，因此查询效率也非常高。与传统的DBMS不同，SQLite中记录的日志，实质是dirty-page，重做实质是对利用WAL中的日志页覆盖db-page，这种实现方式比较简单，同时也比较浪费空间，因为一个page是1k，即使只更新1byte，也会导致日志记录1k。<br>我们可以在数据库建立时就改变日志模式</p>
+<p>WAL日志模式优点：<br>1) 读写可以并发，不会阻塞<br>2）只有一个WAL文件，性能优势明显。</p>
+<p>WAL模式描述：<br><a href="https://blog.csdn.net/wql2rainbow/article/details/73650056?utm_source=blogxgwz20" target="_blank" rel="noopener">https://blog.csdn.net/wql2rainbow/article/details/73650056?utm_source=blogxgwz20</a><br><a href="https://www.sqlite.org/wal.html" target="_blank" rel="noopener">https://www.sqlite.org/wal.html</a><br><a href="https://blog.csdn.net/chinaclock/article/details/48622243" target="_blank" rel="noopener">https://blog.csdn.net/chinaclock/article/details/48622243</a><br><a href="http://garyliutw.blogspot.com/2013/07/sqlite_24.html" target="_blank" rel="noopener">http://garyliutw.blogspot.com/2013/07/sqlite_24.html</a></p>
+<p>2、PRAGMA synchronous = OFF<br>The sync operations that SQLite performs to help ensure integrity can be disabled at run-time using the synchronous pragma. By setting PRAGMA synchronous=OFF, all sync operations are omitted. This makes SQLite seem to run faster, but it also allows the operating system to freely reorder writes, which could result in database corruption if a power failure or hard reset occurs prior to all content reaching persistent storage.<br>For maximum reliability and for robustness against database corruption, SQLite should always be run with its default synchronous setting of FULL.</p>
+<p>推荐使用配置：<br>PRAGMA journal_mode = WAL<br>PRAGMA synchronous = NORMAL<br>PRAGMA locking_mode=EXCLUSIVE</p>
+<p>/**<br>@brief Default config name.<br>The default config for WCDB is :</p>
+<ol>
+<li>PRAGMA locking_mode=NORMAL</li>
+<li>PRAGMA synchronous=NORMAL</li>
+<li>PRAGMA journal_mode=WAL</li>
+<li>PRAGMA fullfsync=ON<br>Setting config for this name will overwrite the default config.<br>@return default config name<br>*/</li>
+</ol>
+
+      
+    </div>
+    <footer>
+      
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+  
+    <a href="/2015/10/06/Video-streaming-and-caching-in-iOS/" class="alignright next">Prev<i class="fa fa-long-arrow-right"></i></a>
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread" data-thread-key="/2019/05/20/reuse-block/"></div>
+<!-- Duoshuo Comment END -->
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2019 Weihao Xu
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="noopener">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="noopener">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+
+
+
+
+    <script type="text/javascript">
+        (function(){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+/*
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop > 0 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+*/
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+    
+    <script type="text/javascript">
+      var duoshuoQuery = {short_name:"sky-weihao"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] 
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>

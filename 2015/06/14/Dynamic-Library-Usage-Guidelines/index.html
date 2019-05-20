@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>Dynamic Library Usage Guidelines | Sky-Weihao的博客</title>
@@ -11,18 +11,18 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="Dynamic Library Usage Guidelines"/>
-  <meta property="og:site_name" content="Sky-Weihao的博客"/>
+  <meta property="og:title" content="Dynamic Library Usage Guidelines">
+  <meta property="og:site_name" content="Sky-Weihao的博客">
 
   
-    <meta property="og:image" content="undefined"/>
+    <meta property="og:image" content="undefined">
   
 
   <link href="/avatar.png" rel="icon">
   <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
-  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
-<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
-<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+<link rel="stylesheet" href="/css/style.css">
   <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
   <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
   
@@ -39,11 +39,11 @@
 </script>
 
 </head>
-
+</html>
 <body>
   <header id="header" class='normal_mode'>
     <nav id="main-nav">
-  <ul class='container'>
+  <ul class="container">
     
       <li><a href="/">主页</a></li>
     
@@ -59,7 +59,7 @@
     <div class="gallery">
   <div class="photoset">
     
-      <img src="">
+      <img src>
     
   </div>
   <div class="control">
@@ -102,7 +102,7 @@
 <p>一个动态库可能它自己也有一个dependent libraries，为了查出动态库依赖于哪些库，使用otool －L <library.>命令。在使用一个库之前，你必须确保所有的独立库都在你的电脑中。否者的话，动态加载器在启动时或者使用dlopen打开你的库时不会加载你的app或者库。</library.></p>
 <p>一个进程能够打开数次打开同一个动态库而不用dlclose等去关闭它，dlopen函数返回和第一次返回相同的library句柄。但是它同样提高与这个句柄相关的引用计数。调用dlclose去减少library句柄的引用计数。因此，你每次调用dlopen之后必须平衡调用dlclose。当一个库句柄的引用计数为零时，动态加载器可能从app的地址空间中移除这个库。</p>
 <h2 id="The_Library_Search_Process">The Library Search Process</h2><p>dlopen的第一个参数是要打开动态库的名字，这个可能是一个文件名或者是部分或者全部的有效的路径名。例如，libCelsus.dylib，lib/libCelsus.dylib或者是/usr/local/libCelsus.dylib。<br>动态加载器查找通过一系列的环境变量定义的（如header search path,library search path）和线程当前工作目录的路径中去搜索libraries。这些变量在被定义的时候，必须包含一个被冒号分割开的多个路径，这些路径指明动态加载器在哪里查找这些库，table 1列出了这些变量：</p>
-<p><img src="/img/Dymamic Library Usage Guidelines_img1.png" alt=""></p>
+<p><img src="/img/Dymamic Library Usage Guidelines_img1.png" alt></p>
 <p>当库的名字是一个文件名（就是没有包含任何目录名），动态加载器会搜索多个位置直到找到它位置（位置有下面的这些）：</p>
 <ol>
 <li>$LD_LIBRARY_PATH</li>
@@ -116,9 +116,9 @@
 <li>特定的路径</li>
 <li>使用文件名的 $DYLD_FALLBACK_LIBRARY_PATH </li>
 </ol>
-<p>例如，你在之前设置的在下面表中的环境变量<br><img src="/img/Dymamic Library Usage Guidelines_img2.png" alt=""></p>
-<p>加入你的app使用dlopen打开文件名为libCelsus.dylib，动态加载器会尝试使用下面路径打开库<br><img src="/img/Dymamic Library Usage Guidelines_img3.png" alt=""></p>
-<p>如果app使用路径名/libs/libCelsus.dylib调用dlopen，动态加载器尝试使用这些路径名去查找库<br><img src="/img/Dymamic Library Usage Guidelines_img4.png" alt=""></p>
+<p>例如，你在之前设置的在下面表中的环境变量<br><img src="/img/Dymamic Library Usage Guidelines_img2.png" alt></p>
+<p>加入你的app使用dlopen打开文件名为libCelsus.dylib，动态加载器会尝试使用下面路径打开库<br><img src="/img/Dymamic Library Usage Guidelines_img3.png" alt></p>
+<p>如果app使用路径名/libs/libCelsus.dylib调用dlopen，动态加载器尝试使用这些路径名去查找库<br><img src="/img/Dymamic Library Usage Guidelines_img4.png" alt></p>
 <h2 id="Specifying_the_Scope_and_Binding_Behavior_of_Exported_Symbol">Specifying the Scope and Binding Behavior of Exported Symbol</h2><p>dlopen第二个参数定义了两个属性：当前线程中库的exported symbols的范围和什么时候绑定app的引用到这些symbol中。<br>Symbol的范围直接影响了app的性能。因此，你为你的app设置在运行时打开的库的合适的范围是很重要的。<br>dynamically loaded library的被输出的symbol可以是当前进程两级范围中的一级：全局和本地scope。在这些scope中的主要区别是在全局范围中的symbols在进程中的所有image是可用的，包含其他的一些dynamically loaded libraries。local scope的symbols只能够被用在打开这个library的image中。See <strong>Using Symbols</strong>。</p>
 <p>当动态加载器查找symbols时，它会在搜索范围内与每个symbol的字符串进行比较。减少symbol的数量动态加载器需要去查找目标的symbol会提升你app的性能。打开所有的dynamically loaded libraries到local scope而不是全局scope会提升查找symbol的性能。<br>你永远不需要在进程的全局范围内打开一个动态库才能让所有在app中的modules能使用它的symbols。替代的方式是，每个使用到这个库的module应该在它的locol scope中打开它。在结束时，module应该关闭这个库。如果你想要library中被export的symbol能够在进程所有的images中使用，考虑把库做成app的dependent 库。<br>使用去定义symbol scope的参数也同样定义了dynamically loaded library中undefined external symbols是什么时候被resolve的（或者是与他们库中的自己独立库的library绑定）。Dynamically loaded library中undefined external symbols能够马上或之后被resolve。如果一个客户端的app使用了在dlopen一个动态库时马上绑定，动态加载器会在客户端控制权返回之前绑定所有的undefined external symbols。如Listing 1 展示了动态加载器的输出信息当DY_PRINT_BINDING环境变量被设置和一个客户端的app加载一个名为libPerson.dylib的dynamic library。<br><strong>Listing 1  Bindings resolved during call to dlopen using immediate binding</strong></p>
 <figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">dyld:</span> lazy <span class="string">bind:</span> <span class="string">client:</span><span class="number">0x107575050</span> = libdyld.<span class="string">dylib:</span>_dlopen, *<span class="number">0x107575050</span> = <span class="number">0x7FFF88740922</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9000</span> = libdyld.<span class="string">dylib:</span>dyld_stub_binder, *<span class="number">0x1075A9000</span> = <span class="number">0x7FFF887406A0</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9220</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_cache, *<span class="number">0x1075A9220</span> = <span class="number">0x7FFF7890EC10</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9248</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_cache, *<span class="number">0x1075A9248</span> = <span class="number">0x7FFF7890EC10</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9228</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_vtable, *<span class="number">0x1075A9228</span> = <span class="number">0x7FFF7890CF60</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9250</span> = libobjc.A.<span class="string">dylib:</span>__objc_empty_vtable, *<span class="number">0x1075A9250</span> = <span class="number">0x7FFF7890CF60</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9218</span> = <span class="string">CoreFoundation:</span>_OBJC_CLASS_$_NSObject, *<span class="number">0x1075A9218</span> = <span class="number">0x7FFF77C40BA8</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9238</span> = <span class="string">CoreFoundation:</span>_OBJC_METACLASS_$_NSObject, *<span class="number">0x1075A9238</span> = <span class="number">0x7FFF77C40B80</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9240</span> = <span class="string">CoreFoundation:</span>_OBJC_METACLASS_$_NSObject, *<span class="number">0x1075A9240</span> = <span class="number">0x7FFF77C40B80</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9260</span> = <span class="string">CoreFoundation:</span>___CFConstantStringClassReference, *<span class="number">0x1075A9260</span> = <span class="number">0x7FFF77C72760</span></span><br><span class="line"><span class="string">dyld:</span> <span class="string">bind:</span> libPerson.<span class="string">dylib:</span><span class="number">0x1075A9280</span> = <span class="string">CoreFoundation:</span>___CFConstantStringClassReference, *<span class="number">0x1075A9280</span> = <span class="number">0x7FFF77C72760</span></span><br></pre></td></tr></table></figure>
@@ -163,16 +163,16 @@
   </div>
   <footer id="footer" class="inner"><div>
   
-  &copy; 2015 Weihao Xu
+  &copy; 2019 Weihao Xu
   
 </div>
-Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="noopener">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="noopener">GitHub Pages</a>
 
 <div class="clearfix"></div></footer>
   
-<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
-<script src="/js/gallery.js" type="text/javascript"></script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
 
 
 

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>运行Mach-O文件 | Sky-Weihao的博客</title>
@@ -11,18 +11,18 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="运行Mach-O文件"/>
-  <meta property="og:site_name" content="Sky-Weihao的博客"/>
+  <meta property="og:title" content="运行Mach-O文件">
+  <meta property="og:site_name" content="Sky-Weihao的博客">
 
   
-    <meta property="og:image" content="undefined"/>
+    <meta property="og:image" content="undefined">
   
 
   <link href="/avatar.png" rel="icon">
   <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
-  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
-<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
-<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+<link rel="stylesheet" href="/css/style.css">
   <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
   <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
   
@@ -39,11 +39,11 @@
 </script>
 
 </head>
-
+</html>
 <body>
   <header id="header" class='normal_mode'>
     <nav id="main-nav">
-  <ul class='container'>
+  <ul class="container">
     
       <li><a href="/">主页</a></li>
     
@@ -59,7 +59,7 @@
     <div class="gallery">
   <div class="photoset">
     
-      <img src="">
+      <img src>
     
   </div>
   <div class="control">
@@ -91,7 +91,7 @@
     <div class="entry">
       
         <p>为了展示代码的效果，程序必须启动线程和链接到dynamic shared libraries（动态分享库），为了与其它库和模块一起运行，你的应用程序必须在modules(.o)里面定义符号的引用，这些引用会在运行时被解决。在运行时应用程序中所有modules的symbol名字都会在共享的命名空间中使用。为了允许未来应用程序和使用库的使用，应用程序和库的开发者必须保证他们在功能和数据中选择的名字不会与其它modules冲突。<br>OX 10.1之后的双重命名空间特征把module的名字作为symbols表symbol名字的一部分添加到表里面去。这种方法确保一个module的符号名字不会与其它module的名字冲突。（然而这段的后面半段我也不知道跟前半段有什么关系。）为了展示独特的任务或者提高用户的体验，你的程序可能需要启动其它的应用程序或者运行命令行工具。为了维护高等级的操作性和提供一致的用户体验，你的应用程序需要使用特定的系统功能和框架去运行线程和运行程序。<br>这篇文章提供了OS X动态加载过程的概览，OS X中加载和链接一个程序的过程主要有两个入口：OS X 的内核和动态链接器。当你执行一个程序，内核会为程序创建处理进程，然后在程序地址空间中加载程序和动态链接器shared librariy，通常是/usr/lib/dyld。然后内核会执行动态链接器中加载库和程序引用的代码。这篇文章同样也描述了module中依赖于他们如何被定义的可视symbols和在运行时解决symbol的过程。</p>
-<h2 id="Launching_an_application">Launching an application</h2><p>当你从Finder中启动一个应用程序时，又或者当你在shell中运行程序时，系统最后会根据你的行为调用两个函数，fork和execve。fork功能创建一个进程；execve功能加载和运行程序。这里有多个不同的功能，比如execl,execv和exect，每个功能提供了不同传参和环境变量的方法到程序中。在OS X，每个这些其他的exec路径最终调用了内核路径execve。<br>当你在写Mac的app时，你会使用到Launch Services框架启动其它应用程序。Launch Services知道程序的包，并且你能够使用它打开应用程序和文档。然后Finder和Dock使用Launch Services去维护从文档类型反射到能打开它们（文档）的程序的数据库(如你想打开一个.md文件，开始数据库中是没有打开它的程序的资料，但是当你第一次选择打开它的程序时，数据库会保存能够打开.md文件的程序的数据)。Cocoa应用程序能使用类NSWorkspace启动程序和文档，NSWorkspace它本身使用了Launch Services。Launch Service最终还是调用到了fork和exec去做实际的执行代码和创建新线程。For more information on Launch Services, see <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/LaunchServicesConcepts/LSCIntro/LSCIntro.html#//apple_ref/doc/uid/TP30000999" target="_blank" rel="external"> Launch Services Programming Guide</a></p>
+<h2 id="Launching_an_application">Launching an application</h2><p>当你从Finder中启动一个应用程序时，又或者当你在shell中运行程序时，系统最后会根据你的行为调用两个函数，fork和execve。fork功能创建一个进程；execve功能加载和运行程序。这里有多个不同的功能，比如execl,execv和exect，每个功能提供了不同传参和环境变量的方法到程序中。在OS X，每个这些其他的exec路径最终调用了内核路径execve。<br>当你在写Mac的app时，你会使用到Launch Services框架启动其它应用程序。Launch Services知道程序的包，并且你能够使用它打开应用程序和文档。然后Finder和Dock使用Launch Services去维护从文档类型反射到能打开它们（文档）的程序的数据库(如你想打开一个.md文件，开始数据库中是没有打开它的程序的资料，但是当你第一次选择打开它的程序时，数据库会保存能够打开.md文件的程序的数据)。Cocoa应用程序能使用类NSWorkspace启动程序和文档，NSWorkspace它本身使用了Launch Services。Launch Service最终还是调用到了fork和exec去做实际的执行代码和创建新线程。For more information on Launch Services, see <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/LaunchServicesConcepts/LSCIntro/LSCIntro.html#//apple_ref/doc/uid/TP30000999" target="_blank" rel="noopener"> Launch Services Programming Guide</a></p>
 <h2 id="Finding_imported_Symbols">Finding imported Symbols</h2><p>当动态链接器加载一个Mach-O文件，它会链接文件的imported symbols到他们在share library或framework中的定义。这一段描述了如何绑定一个Mach-O imported symbols到他们在其它Mach-O文件里的定义。它同样解释了查找symbol的过程。</p>
 <h3 id="Forking_and_executing_the_process">Forking and executing the process</h3><p>Mach-O执行文件包含由加载命令组成的头部，对于使用了shared libraries或者frameworks的程序来说，这些<strong>加载命令每个都定义了linker需要用到去加载程序的位置</strong>。如果你使用了xcode，linker一般是/usr/lib/dyld.<br>当你调用execve方法，内核首先会加载特定的程序文件（Mach－O文件）并且检查在文件中mach_header的结构。<strong>内核证明文件是有效的Mach－O文件，截获在header中的加载命令，然后内核加载指定的动态链接器加载命令到内存中并且在程序文件中运行动态链接器。</strong><br><strong>动态链接器加载所有主程序需要链接的shared libraries和绑定足够的符号去启动程序</strong>。然后调用入口函数，在构建时期，静态链接器从对象文件/usr/bin/crtl.o添加标准的入口函数到主执行文件中。这个功能为内核设置了运行时环境状态并且为c++对象调用静态初始器，初始化Objective-C运行时，并且调用程序的main函数。（即crtl.o文件是程序主要入口，这个入口调用main函数）。</p>
 <h3 id="Binding_Symbols">Binding Symbols</h3><p>绑定是解决一个module中对其它modules的函数和数据引用的解决过程。modules可以使用在相同或者不同的Mach-O文件中。当程序第一次加载的时候，动态链接器加载imported shared libraries到程序的地址空间中。当绑定执行时，链接器会用shared libraries中实际定义的内存地址代替执行文件中的imported reference.<br>动态链接器能在加载和执行时期的不同阶段绑定程序，它们依赖于你在构建期定义的选项：</p>
@@ -163,16 +163,16 @@
   </div>
   <footer id="footer" class="inner"><div>
   
-  &copy; 2015 Weihao Xu
+  &copy; 2019 Weihao Xu
   
 </div>
-Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="noopener">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="noopener">GitHub Pages</a>
 
 <div class="clearfix"></div></footer>
   
-<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
-<script src="/js/gallery.js" type="text/javascript"></script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
 
 
 
