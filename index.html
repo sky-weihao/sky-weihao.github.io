@@ -112,7 +112,7 @@
       <time datetime="2019-05-20T03:04:51.000Z"><a href="/2019/05/20/reuse-block/">周一, 5月 20 2019, 11:04:51 上午</a></time>
 
   
-    <h1 class="title"><a href="/2019/05/20/reuse-block/">Hello数据库使用异常情况总结</a></h1>
+    <h1 class="title"><a href="/2019/05/20/reuse-block/">项目中使用sqlite数据库使用异常情况总结</a></h1>
   
 
 
@@ -134,19 +134,23 @@
     </header>
     <div class="entry">
       
-        <p>Hello数据库使用异常情况总结 1、设置了PRAGMA journal_mode = OFF<br>OFF日志模式让SQLite放弃在开始时创建回滚日志，它会禁用SQLite的原子提交和回滚功能，让ROLLBACK命令不可用。如果使用OFF日志模式的事务在中间某时刻发生崩溃或断电，则数据库文件不能恢复，可能会被损坏。</p>
+        <p>闲聊：好久没有更新博客啦，近期由于工作上的一些原因，相对来说比之前要有空一点，在逐步整理一下之前在做的一些事情，可是之前做的事情也没有进行太详细严谨的记录，包括怎样重新使用hexo更新文章到blog，还有markdown的语法都已经确实忘记得差不多了，只能逐渐恢复下先更新一点，不过文章先更新上来，文章的质量还要等我熟悉blog这块怎样更新要持续进行优化，感谢大家观看。</p>
+<p>项目中使用了fmdb作为sqlite数据库上层封装控件，简单总结一下此前进行数据库数据异常丢失，数据库访问失败的原因情况：<br>1、设置了PRAGMA journal_mode = OFF<br>OFF日志模式让SQLite放弃在开始时创建回滚日志，它会禁用SQLite的原子提交和回滚功能，让ROLLBACK命令不可用。如果使用OFF日志模式的事务在中间某时刻发生崩溃或断电，则数据库文件不能恢复，可能会被损坏。</p>
 <p>日志模式<br>SQLite中日志模式主要有DELETE和WAL两种，其他几种比如TRUNCATE，PERSIST，MEMORY基本原理都与DELETE模式相同，不作详细展开。DELETE模式采用影子分页技术(Shadow paging)，DELETE模式下，日志中记录的变更前数据页内容；WAL模式下，日志中记录的是变更后的数据页内容。事务提交时，DELETE模式将日志刷盘，将DB文件刷盘，成功后，再将日志文件清理；WAL模式则是将日志文件刷盘，即可完成提交过程。那么WAL模式下，数据文件何时更新呢？这里引入了检查点概念，检查点的作用就是定期将日志中的新页覆盖DB文件中的老页，并通过参数wal_autocheckpoint来控制检查点时机，达到权衡读写的目的。<br>DELETE模式下，写事务直接更新db-page，并将old-page写入日志，读事务则直接读db-page，因为db-page中保存了提交的所有事务的更新。事务提交后，直接将日志文件删除；若事务需要回滚，则将日志中old-page中的内容覆盖db-page，恢复原始内容。WAL模式下，写事务将更新写到日志文件中，不更新db-page，事务提交时，也不影响db-page，只是将日志持久化而已。若事务回滚，则不将日志写入文件即可。由于最新的数据在日志文件中，那么如何读取到最新的数据呢？WAL模式通过end-mark(事务提交位点)达到这一目的。具体而已，事务开始时，会首先扫描日志文件，获取最近一个end-mark，在读取数据时，首先会判断page是否在wal日志文件中存在，因为同一个page，一定是wal文件中的比db文件中的要新。如果存在，则使用，否则，再从db文件中获取指定的page。从流程上来看，这个过程比较慢，因为极端情况下，每次读都需要扫描wal文件和db文件。为了提高性能，WAL模式中有一个wal-index文件，这个文件记录了页号和该页在WAL文件中的偏移，并且wal-index文件采用共享缓存实现，从文件名也可以看到，后缀是.shm，因此判断page是否在wal文件存在的操作实质是一次内存读。wal-index采用hash表存储，因此查询效率也非常高。与传统的DBMS不同，SQLite中记录的日志，实质是dirty-page，重做实质是对利用WAL中的日志页覆盖db-page，这种实现方式比较简单，同时也比较浪费空间，因为一个page是1k，即使只更新1byte，也会导致日志记录1k。<br>我们可以在数据库建立时就改变日志模式</p>
 <p>WAL日志模式优点：<br>1) 读写可以并发，不会阻塞<br>2）只有一个WAL文件，性能优势明显。</p>
-<p>WAL模式描述：<br><a href="https://blog.csdn.net/wql2rainbow/article/details/73650056?utm_source=blogxgwz20" target="_blank" rel="noopener">https://blog.csdn.net/wql2rainbow/article/details/73650056?utm_source=blogxgwz20</a><br><a href="https://www.sqlite.org/wal.html" target="_blank" rel="noopener">https://www.sqlite.org/wal.html</a><br><a href="https://blog.csdn.net/chinaclock/article/details/48622243" target="_blank" rel="noopener">https://blog.csdn.net/chinaclock/article/details/48622243</a><br><a href="http://garyliutw.blogspot.com/2013/07/sqlite_24.html" target="_blank" rel="noopener">http://garyliutw.blogspot.com/2013/07/sqlite_24.html</a></p>
 <p>2、PRAGMA synchronous = OFF<br>The sync operations that SQLite performs to help ensure integrity can be disabled at run-time using the synchronous pragma. By setting PRAGMA synchronous=OFF, all sync operations are omitted. This makes SQLite seem to run faster, but it also allows the operating system to freely reorder writes, which could result in database corruption if a power failure or hard reset occurs prior to all content reaching persistent storage.<br>For maximum reliability and for robustness against database corruption, SQLite should always be run with its default synchronous setting of FULL.</p>
 <p>推荐使用配置：<br>PRAGMA journal_mode = WAL<br>PRAGMA synchronous = NORMAL<br>PRAGMA locking_mode=EXCLUSIVE</p>
-<p>/**<br>@brief Default config name.<br>The default config for WCDB is :</p>
+<p>同时附上了微信WCDB（也是建立在sqlite上）对数据库属性的默认配置进行参考，其也是开启了wal模式，并且没有对数据库读写synchronous设置为FULL，<br>/**<br>@brief Default config name.<br>The default config for WCDB is :</p>
 <ol>
 <li>PRAGMA locking_mode=NORMAL</li>
 <li>PRAGMA synchronous=NORMAL</li>
 <li>PRAGMA journal_mode=WAL</li>
 <li>PRAGMA fullfsync=ON<br>Setting config for this name will overwrite the default config.<br>@return default config name<br>*/</li>
 </ol>
+<p>但无论在任何情况及设计任何配置的情况下，数据库<br>数据库修复策略（目前已知在app里内无法使用.dump命令到sql语句）<br>1、使用sqlite3_backup_init、sqlite3_backup_step、sqlite3_backup_finish方法进行数据库文件备份（目前已经实现）<br>当发现数据库损坏时，使用相对应方法使用备份文件进行修复，使用双重备份提高成功率<br>优点：<br>1、sqlite3库自带方法，使用比较方便<br>2、sqlite网上可查找相关的备份方法说明文档<br>3、恢复快<br>缺点：<br>1、未知修复成功率能达到多少<br>2、压缩后没有dump方法的数据量少 不适合db损坏率较低的场景<br>3、备份耗时比较长<br>4、无法解决用户数据库已损坏情况的恢复</p>
+<p>2、自己实现dump方法<br>优点：<br>1、容量小、备份耗时中等<br>2、能针对数据库非master表部分损坏的情况进行修复<br>缺点：<br>1、实现dump的相关执行语句需要自己实现<br>2、恢复慢<br>难度：<br>中等</p>
+<p>3、使用微信wcdb repairKit方法进行数据库备份和恢复（研究中）<br>优点：<br>1、微信验证修复成功率达90%以上<br>2、能进行压缩，压缩比较高<br>3、支持加解密<br>4、支持ORM，比fmdb读写速度快<br>缺点：<br>1、需要读懂分析微信wcdb中的代码或者把项目接入从fmdb的使用迁移wcdb到项目中，并去除项目中fmdb的引用。<br>难度：<br>较大</p>
+<p>参考文章：<br><a href="https://blog.csdn.net/wql2rainbow/article/details/73650056?utm_source=blogxgwz20" target="_blank" rel="noopener">https://blog.csdn.net/wql2rainbow/article/details/73650056?utm_source=blogxgwz20</a><br><a href="https://www.sqlite.org/wal.html" target="_blank" rel="noopener">https://www.sqlite.org/wal.html</a><br><a href="https://blog.csdn.net/chinaclock/article/details/48622243" target="_blank" rel="noopener">https://blog.csdn.net/chinaclock/article/details/48622243</a><br><a href="http://garyliutw.blogspot.com/2013/07/sqlite_24.html" target="_blank" rel="noopener">http://garyliutw.blogspot.com/2013/07/sqlite_24.html</a><br><a href="http://www.runoob.com/sqlite/sqlite-pragma.html" target="_blank" rel="noopener">http://www.runoob.com/sqlite/sqlite-pragma.html</a></p>
 
       
     </div>
