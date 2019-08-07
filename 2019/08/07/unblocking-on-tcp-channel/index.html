@@ -115,15 +115,22 @@
 <li>为TLS record 子协议类型的协议类型</li>
 <li>业务协议的内容通过加密，其中的内容无法通过任何行为特征进行分析</li>
 </ol>
-<h4 id="Use_tls_resumption_in_tls_1-1">Use tls resumption in tls 1.1</h4><p>如果实现了上述的基础特性，可能已经能解决协议特征行为识别的问题，运营商或者封禁技术人员已经无法识别你的协议是否是私有协议，他们只能认为你发送的消息与所有的https消息一样。<br>但在tcp正式发送tls伪装的消息前与tcp 三次握手链接成功之间的时间段，因使用tls则引入了一些能进行识别的因素。正常使用HTTPS需要先通过SSL/TLS握手验证，简单概括TLS正常握手过程为协商双方使用配置、验证身份、基于rsa算法协商并生成对称性加密key。 如果在不进行TLS握手的情况下直接使用TLS Record的ApplicationData子协议，运营商能可能会发现你们应用ip的流量上有异常，然后通过该路径进行识别进行封禁。</p>
-<p>如果使用常规的TLS handshake流程，需要两个rtt进行交互，因此可以使用比较新的TLS 1.2的特性TLS resumption 来模拟这一步交互，降低TLS handshake交互所需的耗时，这时tls handshake的流程如下：  </p>
+<h4 id="使用TLS_1-1中TLS_Resumption进行握手的特性">使用TLS 1.1中TLS Resumption进行握手的特性</h4><p>如果实现了上述的基础特性，可能已经能解决协议特征行为识别的问题，运营商或者封禁技术人员已经无法识别你的协议是否是私有协议，他们只能认为你发送的消息与所有的https消息一样。<br>但在tcp正式发送tls伪装的消息前与tcp 三次握手链接成功之间的时间段，因使用tls则引入了一些能进行识别的因素。正常使用HTTPS需要先通过SSL/TLS握手验证，简单概括TLS正常握手过程为协商双方使用配置、验证身份、基于rsa算法协商并生成对称性加密key。 如果在不进行TLS握手的情况下直接使用TLS Record的ApplicationData子协议，运营商能可能会发现你们应用ip的流量上有异常，然后通过该路径进行识别进行封禁。</p>
+<p>如果使用常规的TLS handshake流程，需要两个rtt进行交互。</p>
+<ol>
+<li>Client Hello</li>
+<li>Server Hello, Certificate, Server Hello Done</li>
+<li>Client Key Exchanged, Client Changed Cipher Spec, Finished</li>
+<li>Server Changed Cipher Spec, Finished</li>
+</ol>
+<p>因此可以使用比较新的TLS 1.1的特性TLS Resumption handshake来模拟这一步交互，降低TLS 伪装交互所需的耗时，TLS Resumption的流程如下：  </p>
 <ol>
 <li>Client Hello</li>
 <li>Server Hello, Change Cipher Spec, Finished</li>
 <li>Client Changed Cipher Spec, Finished<br>在Client Finished之后，我们就能发送业务协议了。</li>
 </ol>
-<p>到此，已经又解决了一个问题，已经较完整把tcp通道伪装成了https协议的交互模式，而且能在可以暂时不考虑安全的情况下，通过tls 1.1一些较新的特性降低TLS伪装的耗时。  </p>
-<h4 id="Do_more_detail_about_tls_handshake">Do more detail about tls handshake</h4><p>通过回顾SSL/TLS的定义，我们能发现使用TLS resumption伪装的过程中仍有非常多的细节没有处理，主要信息在Client Hello与Server Hello中，若tls handshake的过程需要自己去实现，这时整个协议细节都可以进行调整，其中配置大致包含:</p>
+<p>到此，已经又解决了一个问题，已经较完整把tcp通道伪装成了HTTPS协议的交互模式，而且能在可以暂时不考虑安全的情况下，通过TLS一些较新的特性降低TLS伪装的耗时。  </p>
+<h4 id="关注更多TLS_handshake交互过程中的细节">关注更多TLS handshake交互过程中的细节</h4><p>通过回顾SSL/TLS的定义，我们能发现使用TLS resumption伪装的过程中仍有非常多的细节没有处理，主要信息在Client Hello与Server Hello中，若tls handshake的过程需要自己去实现，这时整个协议细节都可以进行调整，其中配置大致包含:</p>
 <ol>
 <li>TLS record header</li>
 <li>32 bytes random bytes</li>
