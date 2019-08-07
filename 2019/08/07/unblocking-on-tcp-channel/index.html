@@ -1,0 +1,266 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>unblocking-on-tcp-channel | Sky-Weihao的博客</title>
+  <meta name="author" content="Weihao Xu">
+  
+  <meta name="description" content="欢迎光临寒舍">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="unblocking-on-tcp-channel">
+  <meta property="og:site_name" content="Sky-Weihao的博客">
+
+  
+    <meta property="og:image" content="undefined">
+  
+
+  <link href="/avatar.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Sky-Weihao的博客" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+<link rel="stylesheet" href="/css/style.css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-368771XX-X']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+</html>
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class="container">
+    
+      <li><a href="/">主页</a></li>
+    
+      <li><a href="/archives">文档</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src>
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2019-08-07T18:44:00.000Z"><a href="/2019/08/07/unblocking-on-tcp-channel/">周三, 8月 7 2019, 11:44:00 中午</a></time>
+
+  
+    <h1 class="title">unblocking-on-tcp-channel</h1>
+  
+
+
+  
+  <div class="categories">
+  	<i class="fa fa-folder-open"></i>
+    <a href="/categories/blog/">blog</a>
+  </div>
+
+
+  
+  <div class="tags">
+  	<i class="fa fa-tag"></i>
+    <a href="/tags/博客/">博客</a>
+  </div>
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <h2 id="客户端tcp通道防封禁笔记">客户端tcp通道防封禁笔记</h2><p>最近我做了一些关于防封禁和网络安全的一些事情，其中主要是使用tcp通道进行自定义协议收发的防封禁，在这段时间对防封禁这一块工作有了更深入的思考，也从跟我们公司中美的后台工程师的讨论中产生了很多想法和深入思考，他们提供了大量的想法，在IT的各方面我感觉他们都非常有天分。在我完成了客户端第一版防封禁功能的编码后，近期来到美国出差，也趁着这段时间尝试对近期工作内容产生的想法及方案的优缺点进行一个整理归纳，同时也自感在这方面修炼还还差得很远，希望大家一起交流沟通。</p>
+<h4 id="背景">背景</h4><p>从事开发的很多技术人员都知道，网络稳定性和可用性对于每个应用来说都非常重要，应用中能经常遇到影响网络稳定性的很多不同条件，比如国家政策、运营商情况、目标恶意攻击等，可能也有很多人员在调查网络链接成功率下降或者面对用户反馈服务失败的时候彻夜不眠去定位问题，但是容易陷入到治标不治本的陷阱里面去。如果没有进行任何防封禁的工作，即使在理想情况下，HTTPS服务成功率也只有在98%～99%之间，如果是自定义的tcp协议通道成功率只会比这个数值要低，尤其是在一些有网络限制的国家或多运营商的国家下。</p>
+<p>因此，为了提升网络的稳定性与可用性，可以通过以下一些建议得到一些启发：</p>
+<h4 id="基于SSL/TLS的tcp通道伪装">基于SSL/TLS的tcp通道伪装</h4><p>首先，我们可以通过把自定义协议格式伪装起来，让他们看起来是正常的https协议，而不是私有协议格式。这是防封禁中最基础的一件事情，因为HTTPS是所有国家互联网中广泛应用。</p>
+<p>关于SSL/TLS协议的更多定义，你们可以通过以下链接查阅：<br><a href="https://www.rfc-editor.org/rfc/rfc5246.txt" target="_blank" rel="noopener">RFC 5246</a><br><a href="http://blog.fourthbit.com/2014/12/23/traffic-analysis-of-an-ssl-slash-tls-session" target="_blank" rel="noopener">Traffic Analysis of an SSL/TLS Session</a></p>
+<h5 id="基本特性">基本特性</h5><p>伪装的主要目的是能够防止运营商通过一些应用交互协议行为特征对app进行封禁，假设你当前网络交互的消息是这样的（先不考虑安全性）：<br><code>message = data length(4 bytes) + data</code><br>在这种情况下，它很容易被识别到有以下特征：</p>
+<ol>
+<li>自定义协议</li>
+<li>长度前面的bits大多都为0</li>
+</ol>
+<p>在我们使用TLS ApplicationData的头对我们协议进行简单伪装之后，协议会变为这样：<br><code>message = TLS record(5 bytes) + counter(8bytes) + data length(4 bytes) + data</code><br>这时看起来有什么特别?  此时已经有一个TLS ApplicationData子协议的头及他的counter。但当你通过Wireshark观察这个协议，你仍然能通过协议的多个为0 的bits及明文的数据找到这条协议的特征。</p>
+<p>因此下一步需要使该协议的数据部分进行随机化<br>TLS协议的初始作用是在TLS handshake交互中协商出能用于后续进行对称性加密的key，并在业务协议交互过程中使用该key对数据进行加密，因此，如果有通过正式TLS协商过程的协议会是这样<br><code>message = TLS record(5 bytes) + counter(8bytes) +  encrypted(data length(4 bytes) + data)</code></p>
+<p>这里有一个问题，有人会问到tls record 中后两个bytes是记录当前tls proto的length，那data length是否是可以不用？答案是：否，原因是由于tls一个message的长度只支持最长65535 bytes，在某些情况下自定义消息长度会大于该长度，若需要进行扩展则需要data length。另外一个case是在防封禁中，有时候需要把自定义协议打散为多条tls 协议发送（即使协议长度没到达65535），因此需要在客户端对数据进行拼接，所以data length字段在message的首个tls协议中必须是含有的。</p>
+<p>到此为止，tcp消息进行tls伪装的基调已经能定下来了，其中两个要素</p>
+<ol>
+<li>为TLS record 子协议类型的协议类型</li>
+<li>业务协议的内容通过加密，其中的内容无法通过任何行为特征进行分析</li>
+</ol>
+<h5 id="Use_tls_resumption_in_tls_1-1">Use tls resumption in tls 1.1</h5><p>如果实现了上述的基础特性，可能已经能解决协议特征行为识别的问题，运营商或者封禁技术人员已经无法识别你的协议是否是私有协议，他们只能认为你发送的消息与所有的https消息一样。<br>但在tcp正式发送tls伪装的消息前与tcp 三次握手链接成功之间的时间段，因使用tls则引入了一些能进行识别的因素。正常使用HTTPS需要先通过SSL/TLS握手验证，简单概括TLS正常握手过程为协商双方使用配置、验证身份、基于rsa算法协商并生成对称性加密key。 如果在不进行TLS握手的情况下直接使用TLS Record的ApplicationData子协议，运营商能可能会发现你们应用ip的流量上有异常，然后通过该路径进行识别进行封禁。</p>
+<p>如果使用常规的TLS handshake流程，需要两个rtt进行交互，因此可以使用比较新的TLS 1.2的特性TLS resumption 来模拟这一步交互，降低TLS handshake交互所需的耗时，这时tls handshake的流程如下：</p>
+<ol>
+<li>Client Hello</li>
+<li>Server Hello, Change Cipher Spec, Finished</li>
+<li>Client Changed Cipher Spec, Finished<br>在Client Finished之后，我们就能发送业务协议了。</li>
+</ol>
+<p>到此，已经又解决了一个问题，已经较完整把tcp通道伪装成了https协议的交互模式，而且能在可以暂时不考虑安全的情况下，通过tls 1.1一些较新的特性降低TLS伪装的耗时。</p>
+<h5 id="Do_more_detail_about_tls_handshake">Do more detail about tls handshake</h5><p>通过回顾SSL/TLS的定义，我们能发现使用TLS resumption伪装的过程中仍有非常多的细节没有处理，主要信息在Client Hello与Server Hello中，若tls handshake的过程需要自己去实现，这时整个协议细节都可以进行调整，其中配置大致包含:</p>
+<ol>
+<li>TLS record header</li>
+<li>32 bytes random bytes</li>
+<li>Session ID</li>
+<li>Cipher Suite</li>
+<li>Compression Suite </li>
+<li>Server name indicator</li>
+<li>Signature algo<br>其中recorder header、session ID、cipher suite、compression suite、signature algo正常情况都是用于客户端与服务器协议的作用，这方面在防封禁上意义没那么大，其中最重要的是server name indicator，若你一直使用应用本身注册的domain，极容易出现针对性封禁（即某个国家或者运营商故意对该应用进行检测封禁，无论是https或者是tcp，都通过强硬的手段恶意封禁）。在这种情况下，我们的https伪装可以伪装得更好去解决这个问题。我们通过动态配置填写SNI字段，比如填写baidu.com，然后其他的配置也根据模拟目标域名的https配置进行下发替换。</li>
+</ol>
+<p>OK，这时又解决一个难题，显然这个时候运营商已经较难识别到你app发送出来的数据是否是真的还是假的，他会认为这时你发出来的数据是百度、谷歌等app发送出来，极难通过网络数据行为分析针对你的app进行封禁（当然仍有其他方法进行封禁，但是封禁成本都已经非常高了）。</p>
+<p>总结一下上面的方法就是为https伪装，让你自定义的协议看上去是一个HTTPS链接交互，但里面传输的内容却是自定义协议：</p>
+<ol>
+<li>伪装SSL/TLS握手流程</li>
+<li>伪装数据包为TLS ApplicationData数据包<br>上面两步的每一步都是可以进行很多变化，这些都基于你的app实际需要使用的情况，但是思想离不开这两步。例如，如果也希望在tls handshake过程中验证服务器可靠性、进行密钥协商，均可以在伪装的过程中也利用TLS原有的特性。数据包格式也可以进行各种优化，如统一协议头、可变长度、协议压缩等。</li>
+</ol>
+<h5 id="Security">Security</h5><p>在安全性方面，我们这边的方案大概使用了0-RTT Pre Shared Key的方式进行密钥协商。涉及到安全相关，对于使用方案相关的策略不进行太多展开描述，大致进行几个原则说明。</p>
+<ol>
+<li>使用0-RTT 的策略主要是考虑在TLS伪装之后，需要尽快进行业务协议交互，能直接使用AES方式进行对称性加密及业务数据传输，降低TLS伪装带来的额外损耗。</li>
+<li>能覆盖使用TLS resumption策略从而没有对服务器进行身份校验的问题</li>
+<li>在上述基础上尽量增加一些安全策略<br>其他详细的扩展阅读可以看微信的文章，描述ECDH与PSK协商策略非常详细。<br><a href="https://github.com/WeMobileDev/article/blob/master/基于TLS1.3的微信安全通信协议mmtls介绍.md" target="_blank" rel="noopener">基于TLS1.3的微信安全通信协议mmtls介绍</a></li>
+</ol>
+
+      
+    </div>
+    <footer>
+      
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+  
+    <a href="/2019/05/20/reuse-block/" class="alignright next">Prev<i class="fa fa-long-arrow-right"></i></a>
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread" data-thread-key="/2019/08/07/unblocking-on-tcp-channel/"></div>
+<!-- Duoshuo Comment END -->
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2019 Weihao Xu
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="noopener">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="noopener">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+
+
+
+
+    <script type="text/javascript">
+        (function(){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+/*
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop > 0 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+*/
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+    
+    <script type="text/javascript">
+      var duoshuoQuery = {short_name:"sky-weihao"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] 
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>
