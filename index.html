@@ -135,12 +135,12 @@
     <div class="entry">
       
         <p>最近做了一些关于防封禁和网络安全的一些事情，其中主要是关于tcp通道进行自定义协议收发的防封禁工作，在这段时间对防封禁这一块有更多一些的思考。同时通过跟我们公司中美的后台工程师的讨论，整个流程产生了很多有价值的想法和思考，在IT的各方面我感觉他们非常卓越，在防封禁方案讨论的过程中大部分的想法都是他们提出的建议，让我获益良多。在近期完成了客户端第一版防封禁功能的编码后来到美国出差，工作压力相对轻松，于是趁着这段时间尝试对近期工作内容产生的想法及方案的优缺点大概进行一个整理归纳。自感在这方面修炼还还差得很远，希望大家一起交流沟通。</p>
-<h4 id="背景">背景</h4><p>从事开发的很多技术人员都知道，网络稳定性和可用性对于每个应用来说都非常重要，应用中经常会遇到影响网络稳定性的很多不同条件，比如国家政策、运营商情况、目标恶意攻击等，可能也有很多人员在调查网络链接成功率下降或者面对用户反馈服务失败的时候彻夜不眠去定位问题，但是容易陷入到治标不治本的陷阱里面去。如果没有进行任何防封禁的工作，即使在理想情况下，HTTPS服务成功率也只有在98%～99%之间，如果是自定义的tcp协议通道成功率只会比这个数值要低，尤其是在一些有网络限制的国家或多运营商的国家下。</p>
+<h3 id="背景">背景</h3><p>从事开发的很多技术人员都知道，网络稳定性和可用性对于每个应用来说都非常重要，应用中经常会遇到影响网络稳定性的很多不同条件，比如国家政策、运营商情况、目标恶意攻击等，可能也有很多人员在调查网络链接成功率下降或者面对用户反馈服务失败的时候彻夜不眠去定位问题，但是容易陷入到治标不治本的陷阱里面去。如果没有进行任何防封禁的工作，即使在理想情况下，HTTPS服务成功率也只有在98%～99%之间，如果是自定义的tcp协议通道成功率只会比这个数值要低，尤其是在一些有网络限制的国家或多运营商的国家下。</p>
 <p>在该方案之前，进行过的防封禁策略就有很多，有关于HTTPS防封禁和tcp防封禁的，比如：<br>备用域名替换、http前置后置ip(http dns)、tcp/udp切换、端口切换、云服务转发等。这里只对HTTPS伪装方案进行了说明。</p>
 <p>为了提升网络的稳定性与可用性，可以通过以下一些建议得到一些启发：</p>
-<h4 id="基于SSL/TLS的tcp通道伪装">基于SSL/TLS的tcp通道伪装</h4><p>首先，我们可以通过把自定义协议格式伪装起来，让他们看起来是正常的https协议，而不是私有协议格式。这是防封禁中最基础的一件事情，因为HTTPS是所有国家互联网中广泛应用。</p>
+<h3 id="基于SSL/TLS的tcp通道伪装">基于SSL/TLS的tcp通道伪装</h3><p>首先，我们可以通过把自定义协议格式伪装起来，让他们看起来是正常的https协议，而不是私有协议格式。这是防封禁中最基础的一件事情，因为HTTPS是所有国家互联网中广泛应用。</p>
 <p>关于SSL/TLS协议的更多定义，你们可以通过以下链接查阅：<br><a href="https://www.rfc-editor.org/rfc/rfc5246.txt" target="_blank" rel="noopener">RFC 5246</a><br><a href="http://blog.fourthbit.com/2014/12/23/traffic-analysis-of-an-ssl-slash-tls-session" target="_blank" rel="noopener">Traffic Analysis of an SSL/TLS Session</a></p>
-<h5 id="基本特性">基本特性</h5><p>伪装的主要目的是能够防止运营商通过一些应用交互协议行为特征对app进行封禁，假设你当前网络交互的消息是这样的（先不考虑安全性）：<br><code>message = data length(4 bytes) + data</code><br>在这种情况下，它很容易被识别到有以下特征：</p>
+<h4 id="基本特性">基本特性</h4><p>伪装的主要目的是能够防止运营商通过一些应用交互协议行为特征对app进行封禁，假设你当前网络交互的消息是这样的（先不考虑安全性）：<br><code>message = data length(4 bytes) + data</code><br>在这种情况下，它很容易被识别到有以下特征：</p>
 <ol>
 <li>自定义协议</li>
 <li>长度前面的bits大多都为0</li>
@@ -153,15 +153,15 @@
 <li>为TLS record 子协议类型的协议类型</li>
 <li>业务协议的内容通过加密，其中的内容无法通过任何行为特征进行分析</li>
 </ol>
-<h5 id="Use_tls_resumption_in_tls_1-1">Use tls resumption in tls 1.1</h5><p>如果实现了上述的基础特性，可能已经能解决协议特征行为识别的问题，运营商或者封禁技术人员已经无法识别你的协议是否是私有协议，他们只能认为你发送的消息与所有的https消息一样。<br>但在tcp正式发送tls伪装的消息前与tcp 三次握手链接成功之间的时间段，因使用tls则引入了一些能进行识别的因素。正常使用HTTPS需要先通过SSL/TLS握手验证，简单概括TLS正常握手过程为协商双方使用配置、验证身份、基于rsa算法协商并生成对称性加密key。 如果在不进行TLS握手的情况下直接使用TLS Record的ApplicationData子协议，运营商能可能会发现你们应用ip的流量上有异常，然后通过该路径进行识别进行封禁。</p>
-<p>如果使用常规的TLS handshake流程，需要两个rtt进行交互，因此可以使用比较新的TLS 1.2的特性TLS resumption 来模拟这一步交互，降低TLS handshake交互所需的耗时，这时tls handshake的流程如下：</p>
+<h4 id="Use_tls_resumption_in_tls_1-1">Use tls resumption in tls 1.1</h4><p>如果实现了上述的基础特性，可能已经能解决协议特征行为识别的问题，运营商或者封禁技术人员已经无法识别你的协议是否是私有协议，他们只能认为你发送的消息与所有的https消息一样。<br>但在tcp正式发送tls伪装的消息前与tcp 三次握手链接成功之间的时间段，因使用tls则引入了一些能进行识别的因素。正常使用HTTPS需要先通过SSL/TLS握手验证，简单概括TLS正常握手过程为协商双方使用配置、验证身份、基于rsa算法协商并生成对称性加密key。 如果在不进行TLS握手的情况下直接使用TLS Record的ApplicationData子协议，运营商能可能会发现你们应用ip的流量上有异常，然后通过该路径进行识别进行封禁。</p>
+<p>如果使用常规的TLS handshake流程，需要两个rtt进行交互，因此可以使用比较新的TLS 1.2的特性TLS resumption 来模拟这一步交互，降低TLS handshake交互所需的耗时，这时tls handshake的流程如下：  </p>
 <ol>
 <li>Client Hello</li>
 <li>Server Hello, Change Cipher Spec, Finished</li>
 <li>Client Changed Cipher Spec, Finished<br>在Client Finished之后，我们就能发送业务协议了。</li>
 </ol>
-<p>到此，已经又解决了一个问题，已经较完整把tcp通道伪装成了https协议的交互模式，而且能在可以暂时不考虑安全的情况下，通过tls 1.1一些较新的特性降低TLS伪装的耗时。</p>
-<h5 id="Do_more_detail_about_tls_handshake">Do more detail about tls handshake</h5><p>通过回顾SSL/TLS的定义，我们能发现使用TLS resumption伪装的过程中仍有非常多的细节没有处理，主要信息在Client Hello与Server Hello中，若tls handshake的过程需要自己去实现，这时整个协议细节都可以进行调整，其中配置大致包含:</p>
+<p>到此，已经又解决了一个问题，已经较完整把tcp通道伪装成了https协议的交互模式，而且能在可以暂时不考虑安全的情况下，通过tls 1.1一些较新的特性降低TLS伪装的耗时。  </p>
+<h4 id="Do_more_detail_about_tls_handshake">Do more detail about tls handshake</h4><p>通过回顾SSL/TLS的定义，我们能发现使用TLS resumption伪装的过程中仍有非常多的细节没有处理，主要信息在Client Hello与Server Hello中，若tls handshake的过程需要自己去实现，这时整个协议细节都可以进行调整，其中配置大致包含:</p>
 <ol>
 <li>TLS record header</li>
 <li>32 bytes random bytes</li>
@@ -177,7 +177,7 @@
 <li>伪装SSL/TLS握手流程</li>
 <li>伪装数据包为TLS ApplicationData数据包<br>上面两步的每一步都是可以进行很多变化，这些都基于你的app实际需要使用的情况，但是思想离不开这两步。例如，如果也希望在tls handshake过程中验证服务器可靠性、进行密钥协商，均可以在伪装的过程中也利用TLS原有的特性。数据包格式也可以进行各种优化，如统一协议头、可变长度、协议压缩等。</li>
 </ol>
-<h5 id="Security">Security</h5><p>在安全性方面，我们这边的方案大概使用了0-RTT Pre Shared Key的方式进行密钥协商。涉及到安全相关，对于使用方案相关的策略不方便太多展开描述，大致进行几个原则说明。</p>
+<h4 id="Security">Security</h4><p>在安全性方面，我们这边的方案大概使用了0-RTT Pre Shared Key的方式进行密钥协商。涉及到安全相关，对于使用方案相关的策略不方便太多展开描述，大致进行几个原则说明。  </p>
 <ol>
 <li>使用0-RTT 的策略主要是考虑在TLS伪装之后，需要尽快进行业务协议交互，能直接使用AES方式进行对称性加密及业务数据传输，降低TLS伪装带来的额外损耗。</li>
 <li>能覆盖使用TLS resumption策略从而没有对服务器进行身份校验的问题</li>
